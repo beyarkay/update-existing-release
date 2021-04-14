@@ -34,7 +34,7 @@ a smarter way to make fresh build assets continuously available, with Github act
 Insert the following into the appropriate step in your `.github/workflows/*.yml` file:
 
     - name: Update release
-      uses: johnwbyrd/update-release@v1
+      uses: johnwbyrd/update-release@v1.0.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         files: ./one-file-you-want-to-release.zip dist/another-file-to-release.exe README.md
@@ -44,7 +44,7 @@ Insert the following into the appropriate step in your `.github/workflows/*.yml`
 The `${{ secrets.GITHUB_TOKEN }}` is valid for exactly an hour from the time your build starts.  If your build requires longer than an hour to run, you will need to [create your own access token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) with repo admin access, [store it as a secret](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets) in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: johnwbyrd/update-release@v1
+      uses: johnwbyrd/update-release@v1.0.0
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
         asset: ./the-file-you-want-to-release.zip
