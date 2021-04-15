@@ -145,12 +145,13 @@ class Connection {
         }
     }
 
-    protected async updateRelease() {
+    protected async updateRelease(id: ReleaseId) {
         try {
-            core.startGroup('Updating release ' + this.release + '...')
+            core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
             await this.github.repos.updateRelease(
                 {
                     ...context.repo,
+                    release_id: id,
                     tag_name: this.tag,
                     name: this.release,
                     body: this.body,
@@ -360,7 +361,10 @@ class Connection {
         if (!(await this.doesReleaseExist())) {
             await this.createRelease();
         } else {
-          await this.updateRelease();
+          let id = await this.getReleaseID();
+          console.debug('Release id: ' + id);
+          if (id >= 0)
+            await this.updateRelease(id);
         }
 
         await this.deleteAssetsIfTheyExist();
