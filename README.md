@@ -50,7 +50,7 @@ Insert the following into the appropriate step in your `.github/workflows/*.yml`
 file:
 
     - name: Update release
-      uses: ColinPitrat/update-release@v1.0.0
+      uses: ColinPitrat/update-release@v1.0.1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         files: ./file-to-release.zip dist/other-file-to-release.exe README.md
@@ -64,7 +64,7 @@ with repo admin access, [store it as a secret](https://help.github.com/en/action
 in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: ColinPitrat/update-release@v1.0.0
+      uses: ColinPitrat/update-release@v1.0.1
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
         asset: ./the-file-you-want-to-release.zip
