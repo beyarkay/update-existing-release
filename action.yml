@@ -1,6 +1,6 @@
-name: 'Update Release'
+name: 'Create/Update release and upload assets'
 description: 'Make fresh build assets available via Github release system'
-author: 'John Byrd <jbyrd at giganticsoftware dot com>'
+author: 'Colin Pitrat'
 inputs: 
   token:
     description: 'Your Github token; try \$\{\{ secrets.GITHUB_TOKEN \}\} if your build lasts less than an hour, or create your own secret token with repository access if your build requires longer than an hour.'

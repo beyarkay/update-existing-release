@@ -1,7 +1,8 @@
-# update-release
+# Create/Update release and upload assets
 
 An action to create a release or update it if it exists and publish assets into
-it.  This ensures the tag is updated so that the release date is updated.
+it. This ensures the release and tag are updated so that the release date is
+updated.
 
 This is typically aimed at updating a `latest` or `nightly` release, possibly
 from different workflows.

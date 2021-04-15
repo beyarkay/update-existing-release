@@ -19,7 +19,7 @@
     "actions",
     "action"
   ],
-  "author": "John Byrd <jbyrd@giganticsoftware.com>",
+  "author": "Colin Pitrat",
   "license": "ISC",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.17.0",
