@@ -145,6 +145,26 @@ class Connection {
         }
     }
 
+    protected async updateRelease() {
+        try {
+            core.startGroup('Updating release ' + this.release + '...')
+            await this.github.repos.updateRelease(
+                {
+                    ...context.repo,
+                    tag_name: this.tag,
+                    name: this.release,
+                    body: this.body,
+                    draft: this.draft,
+                    prerelease: this.prerelease
+                }
+            );
+            core.endGroup();
+        }
+        catch (error) {
+            this.fail(error);
+        }
+    }
+
     protected async createTag() {
         try {
             let tagger = new Tagger();
@@ -215,6 +235,7 @@ class Connection {
         try {
             core.startGroup('Getting assets for the release...')
             let id = await this.getReleaseID();
+            console.debug('Release id: ' + id);
             if (id < 0)
                 return;
             let assets = await this.github.repos.listAssetsForRelease({
@@ -327,17 +348,19 @@ class Connection {
     }
 
     public async run() {
+        let tag = await this.getTag();
+        // create the tag if necessary
+        if (tag === false) {
+            await this.createTag();
+            tag = await this.getTag();
+        }
+        if (!this.isTagCorrect()) {
+            await this.updateTag();
+        }
         if (!(await this.doesReleaseExist())) {
-            let tag = await this.getTag();
-            // create the tag if necessary
-            if (tag === false) {
-                await this.createTag();
-                tag = await this.getTag();
-            }
-            if (!this.isTagCorrect()) {
-                await this.updateTag();
-            }
             await this.createRelease();
+        } else {
+          await this.updateRelease();
         }
 
         await this.deleteAssetsIfTheyExist();
@@ -422,6 +445,7 @@ class Connection {
     protected async updateTag() {
         try {
             let tag = this.getTag();
+            console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
             await this.github.git.updateRef({
                 ...context.repo,
                 ref: 'refs/tags/' + this.tag,
@@ -437,6 +461,7 @@ class Connection {
             // if we can't figure out what file type you have, we'll assign it this unknown type
             // https://www.iana.org/assignments/media-types/application/octet-stream
             const defaultAssetContentType = 'application/octet-stream';
+            core.startGroup('Uploading release asset ' + this.files + '...')
             for (let oneFile of this.files) {
 
                 let contentType: any = lookup(oneFile);
@@ -459,15 +484,15 @@ class Connection {
                 // Upload a release asset
                 // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
                 // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
-                core.startGroup('Uploading release asset ' + this.files + '...')
+                console.debug('Uploading release asset ' + oneFile);
                 await this.github.repos.uploadReleaseAsset({
                     url: await this.getReleaseUploadURL(),
                     headers,
                     name: basename(oneFile),
                     file: readFileSync(oneFile)
                 });
-                core.endGroup();
             }
+            core.endGroup();
         } catch (error) {
             this.fail(error);
         }
