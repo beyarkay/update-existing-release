@@ -22,7 +22,7 @@ inputs:
     required: false
   prerelease:
     description: 'Should the release, if created, be marked as a prerelease?  Such releases are generally publicly visible.'
-    default: true
+    default: false
   draft:
     description: 'Should the release, if created, be marked as a draft?  Such releases are generally not publicly visible.'
     default: false

@@ -79,7 +79,7 @@ class Connection {
     /**
      * Is this a prerelease?
      */
-    protected prerelease: boolean = true;
+    protected prerelease: boolean = false;
 
     /**
      * The path to the file to be released.
