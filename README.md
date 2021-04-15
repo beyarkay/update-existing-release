@@ -3,6 +3,17 @@
 An action to create a release or update it if it exists and publish assets into
 it.  This ensures the tag is updated so that the release date is updated.
 
+This is typically aimed at updating a `latest` or `nightly` release, possibly
+from different workflows.
+This allows the release to always be available (never deleted) while always
+being up-to-date (the tag is updated to so the date shown by GitHub corresponds
+to the latest asset uploaded).
+
+*Drawbacks*:
+ - Assets must be manually deleted if you stop building them. 
+ - Assets can be desynchronized when using multiple workflows if some are
+   failing while others succeed.
+
 - [update-release](#update-release)
   - [Quick start](#quick-start)
     - [For builds lasting more than an hour](#for-builds-lasting-more-than-an-hour)
