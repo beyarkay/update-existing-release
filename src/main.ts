@@ -152,7 +152,8 @@ class Connection {
                 {
                     ...context.repo,
                     release_id: id,
-                    tag_name: this.tag,
+		    // For some reason, passing a tag that already exist started to fail
+                    //tag_name: this.tag,
                     name: this.release,
                     body: this.body,
                     draft: this.draft,
