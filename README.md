@@ -41,8 +41,7 @@ to the latest asset uploaded).
 
 ## Background
 
-This is a fork of [johnwbyrd/update-release](https://github.com/johnwbyrd/update-release)
-which is Archived so I can't submit changes to it.
+This is a fork of [ColinPitrat/update-release](https://github.com/ColinPitrat/update-release) which itself is a fork of [johnwbyrd/update-release](https://github.com/johnwbyrd/update-release)
 
 ## Quick start
 
@@ -50,7 +49,7 @@ Insert the following into the appropriate step in your `.github/workflows/*.yml`
 file:
 
     - name: Update release
-      uses: ColinPitrat/update-release@v1.0.1
+      uses: IsaacShelton/update-release@v1.0.1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         files: ./file-to-release.zip dist/other-file-to-release.exe README.md
@@ -64,14 +63,14 @@ with repo admin access, [store it as a secret](https://help.github.com/en/action
 in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: ColinPitrat/update-release@v1.0.1
+      uses: IsaacShelton/update-release@v1.0.1
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
         asset: ./the-file-you-want-to-release.zip
 
 ## Summary
 
-[This Github action](https://www.github.com/ColinPitrat/update-release) allows
+[This Github action](https://www.github.com/IsaacShelton/update-release) allows
 you, to publish files created by your GitHub Actions as assets in new or
 existing releases. As it does so, it updates the release so that the tag and
 date match the last released asset.
@@ -209,7 +208,7 @@ npm run bundle
 ### Details
 
 This Github action was written for [node.js](https://nodejs.org/en/) in
-[TypeScript](https://github.com/ColinPitrat/update-release), and it uses
+[TypeScript](https://github.com/IsaacShelton/update-release), and it uses
 [webpack](https://webpack.js.org/) in order to run
 [ESLint](https://eslint.org/) before bundling.
 Use [npm install](https://docs.npmjs.com/cli/install) to install all
@@ -259,4 +258,4 @@ files.
 ## Problems?
 
 I welcome all patches and improvements as pull requests against
-[this repository](https://github.com/ColinPitrat/update-release).
+[this repository](https://github.com/IsaacShelton/update-release).
