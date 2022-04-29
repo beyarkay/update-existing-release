@@ -56,7 +56,7 @@ Insert the following into the appropriate step in your `.github/workflows/*.yml`
 file:
 
     - name: Update release
-      uses: IsaacShelton/update-release@v1.0.1
+      uses: IsaacShelton/update-release@v1.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         files: ./file-to-release.zip dist/other-file-to-release.exe README.md
