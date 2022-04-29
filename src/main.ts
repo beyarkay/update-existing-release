@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import github from '@actions/github';
-import { GitHub } from '@actions/github/lib/utils';
+import { getOctokitOptions, GitHub } from '@actions/github/lib/utils';
 import { retry } from '@octokit/plugin-retry';
 import { throttling } from '@octokit/plugin-throttling';
 import { } from '@octokit/types';
@@ -30,7 +30,7 @@ class Connection {
     /**
  * The Octokit Github object, used for most interactions with the server.
  */
-    protected github: typeof GitHub;
+    protected github: InstanceType<typeof GitHub>;
     /** 
      * The secret token used to authenticate with the server.
      */
@@ -98,13 +98,13 @@ class Connection {
         config();
         this.token = core.getInput('token', { required: true });
         core.setSecret(this.token);
-        this.github = github.getOctokit(
+        this.github = new GitHub(getOctokitOptions(
             this.token,
             {
                 throttling,
                 retry
             }
-        );
+        ));
         this.context = context;
         [this.owner, this.repo] = process.env.GITHUB_REPOSITORY.split('/')
         this.ref = process.env.GITHUB_REF;
