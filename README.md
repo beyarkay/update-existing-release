@@ -14,7 +14,6 @@ to the latest asset uploaded).
  - Assets must be manually deleted if you stop building them. 
  - Assets can be desynchronized when using multiple workflows if some are
    failing while others succeed.
-
 - [update-existing-release](#update-existing-release)
   - [Quick start](#quick-start)
     - [For builds lasting more than an hour](#for-builds-lasting-more-than-an-hour)
@@ -28,8 +27,9 @@ to the latest asset uploaded).
     - [message](#message)
     - [body](#body)
     - [prerelease](#prerelease)
-    - [replace](#replace)
     - [draft](#draft)
+    - [replace](#replace)
+    - [updateTag](#updateTag)
   - [Outputs](#outputs)
     - [files](#files-1)
     - [draft](#draft-1)
@@ -40,18 +40,33 @@ to the latest asset uploaded).
     - [security concerns](#security-concerns)
   - [Problems?](#problems)
 
+
+
 ## Background
 
 This is a fork of [ColinPitrat/update-release](https://github.com/ColinPitrat/update-release) which itself is a fork of [johnwbyrd/update-release](https://github.com/johnwbyrd/update-release)
 
+
+
 ## Changes in Isaac Shelton's Fork
 
+v1.2.0
+
 Changes in Isaac Shelton's fork include:
+
+- Added `updateTag` option to automatically update the tag to the latest commit
+
+v1.1.0
+
+Changes in Isaac Shelton's fork include:
+
 - Updated all dependencies to latest versions
 - Code now works with latest version of GitHub API
 - Added `replace` option, to allow for removing attached files that aren't overwritten
 - Now works correctly when the release doesn't exist already (it will be added before updating)
 - Cleaned up a little of the code, although it still isn't the cleanest
+
+
 
 ## Quick start
 
@@ -59,10 +74,12 @@ Insert the following into the appropriate step in your `.github/workflows/*.yml`
 file:
 
     - name: Update release
-      uses: IsaacShelton/update-existing-release@v1.1.0
+      uses: IsaacShelton/update-existing-release@v1.2.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         files: ./file-to-release.zip dist/other-file-to-release.exe README.md
+
+
 
 ### For builds lasting more than an hour
 
@@ -73,7 +90,7 @@ with repo admin access, [store it as a secret](https://help.github.com/en/action
 in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: IsaacShelton/update-existing-release@v1.1.0
+      uses: IsaacShelton/update-existing-release@v1.2.0
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
         release: Nightly
@@ -82,6 +99,8 @@ in your own repository, and reference that secret token in your build:
           stage/x86_64-Windows-HelloWorld.exe
           stage/arm64-MacOS-HelloWorld
           stage/x86_64-Ubuntu-HelloWorld
+
+
 
 ## Summary
 
@@ -98,6 +117,8 @@ and executes in [node.js](https://nodejs.org/en/), it runs on *all* Github's
 supported build runner platforms. These include Windows, MacOS, and Ubuntu as of
 this writing.
 
+
+
 ## Guide
 
 Once your build has successfully completed, update-existing-release will choose a release
@@ -105,6 +126,8 @@ name for your build.  Regardless of whether the ref that triggered the build is
 a tag or a branch, you'll get a human-friendly release name.  You can of course
 override the default choice. If the Github release name already exists, it is
 reused; otherwise, it is created.
+
+
 
 ## Inputs
 
@@ -173,6 +196,14 @@ Provide true or false as a parameter.
 This parameter is **optional**.
 The default setting is `false`.
 
+### draft
+
+Should the release, if created, be marked as a draft?  Such releases are
+generally not publicly visible.  Provide true or false as a parameter.
+
+This parameter is **optional**.
+The default setting is `false`.
+
 ### replace (since v1.1.0)
 
 Added in Isaac Shelton's fork.
@@ -184,14 +215,20 @@ removed and replaced with the files provided.
 This parameter is **optional**.
 The default setting is `false`.
 
-### draft
+### updateTag (since v1.2.0)
 
-Should the release, if created, be marked as a draft?  Such releases are
-generally not publicly visible.  Provide true or false as a parameter.
+Added in Isaac Shelton's fork.
+
+Should the tag be updated to point to the latest commit?
+
+If set, the provided tag will be modified.
+
+If the tag doesn't already exist (regardless of `updateTag`), it will be created pointing to the latest commit.
 
 This parameter is **optional**.
-The default setting is `false`.
-    
+The default setting is `true`.    
+
+
 
 ## Outputs
 
@@ -219,6 +256,8 @@ The name of the release.
 ### tag
 
 The tag used to create the release.
+
+
 
 ## Internals
 

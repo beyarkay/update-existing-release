@@ -29,6 +29,9 @@ inputs:
   replace:
     description: 'Should existing files for the release be removed if not overwritten?'
     default: false
+  updateTag:
+    description: 'Should the tag be updated to point to the latest commit?'
+    default: true
 outputs:
   files:
     description: 'The calculated path(s) to the files that were released.'

@@ -9,10 +9,7 @@ module.exports = {
     "path": __dirname + '/dist',
     "filename": "[name].js"
   },
-  "optimization":{
-    "minimize": false
-  },
-  "devtool": "inline-source-map",
+  "devtool": "source-map",
   "target": "node",
   "resolve": 
   {

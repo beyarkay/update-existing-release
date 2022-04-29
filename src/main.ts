@@ -152,18 +152,19 @@ class Connection {
     protected async updateRelease(id: number) {
         try {
             core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
+            
+            // Update release
             await this.github.rest.repos.updateRelease(
                 {
                     ...context.repo,
                     release_id: id,
-                    // For some reason, passing a tag that already exist started to fail
-                    //tag_name: this.tag,
                     name: this.release,
                     body: this.body,
                     draft: this.draft,
                     prerelease: this.prerelease
                 }
             );
+
             core.endGroup();
         }
         catch (error) {
@@ -476,13 +477,16 @@ class Connection {
 
     protected async updateTag() {
         try {
-            let tag = this.getTag();
-            console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
-            await this.github.rest.git.updateRef({
-                ...context.repo,
-                ref: 'refs/tags/' + this.tag,
-                sha: this.sha
-            });
+            // Update tag
+            if(!isFalsyString(core.getInput('updateTag'))){
+                console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
+                
+                await this.github.rest.git.updateRef({
+                    ...context.repo,
+                    ref: `tags/${this.tag}`,
+                    sha: process.env.GITHUB_SHA
+                });
+            }
         } catch (error) {
             this.fail(error);
         }
