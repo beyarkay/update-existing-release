@@ -16,7 +16,6 @@ This is typically aimed at updating a `latest` or `nightly` release, possibly fr
    
    
 - [update-existing-release](#update-existing-release)
-  
   - [Quick start](#quick-start)
     - [For builds lasting more than an hour](#for-builds-lasting-more-than-an-hour)
   - [Summary](#summary)
