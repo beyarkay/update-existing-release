@@ -139,6 +139,12 @@ class Connection {
                 }
             );
 
+            let sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+            // Wait for GitHub to actually create new release
+            // before we continue
+            await sleep(5000);
+
             core.endGroup();
         }
         catch (error) {
