@@ -234,6 +234,7 @@ class Connection {
         let formattedError = 'An error occurred while updating the release: \n' + JSON.stringify(error, null, 4);
         console.error(formattedError);
         core.setFailed(formattedError);
+        console.trace();
         process.exit(2);
     }
 
