@@ -28,6 +28,7 @@ to the latest asset uploaded).
     - [message](#message)
     - [body](#body)
     - [prerelease](#prerelease)
+    - [replace](#replace)
     - [draft](#draft)
   - [Outputs](#outputs)
     - [files](#files-1)
@@ -43,12 +44,14 @@ to the latest asset uploaded).
 
 This is a fork of [ColinPitrat/update-release](https://github.com/ColinPitrat/update-release) which itself is a fork of [johnwbyrd/update-release](https://github.com/johnwbyrd/update-release)
 
+## Changes in Isaac Shelton's Fork
+
 Changes in Isaac Shelton's fork include:
-- Updating all dependencies to latest versions
+- Updated all dependencies to latest versions
 - Code now works with latest version of GitHub API
-- Added 'replace' option, to allow for removing attached files that aren't overwritten
+- Added `replace` option, to allow for removing attached files that aren't overwritten
 - Now works correctly when the release doesn't exist already (it will be added before updating)
-- Cleaned up a little of the code, although it still is a mess
+- Cleaned up a little of the code, although it still isn't the cleanest
 
 ## Quick start
 
@@ -128,7 +131,7 @@ relative to `${{ github.workspace }}`.
 This parameter is **required**.
 
 ### release
-    
+
 The name of the release to be created. A reasonable-looking release name will
 be created from the current `${{ github.ref }}` if this input is not supplied.
 This reasonable looking default is created by taking `${{ github.ref }}`,
@@ -170,7 +173,9 @@ Provide true or false as a parameter.
 This parameter is **optional**.
 The default setting is `false`.
 
-### replace (added in IsaacShelton's fork)
+### replace (since v1.1.0)
+
+Added in Isaac Shelton's fork.
 
 Should existing files for the release be removed if not overwritten?
 This will cause all existing files attached to the release to be
@@ -187,6 +192,7 @@ generally not publicly visible.  Provide true or false as a parameter.
 This parameter is **optional**.
 The default setting is `false`.
     
+
 ## Outputs
 
 If assets are successfully published, you will get the following outputs from

@@ -1,7 +1,7 @@
 {
-  "name": "update-release",
+  "name": "update-existing-release",
   "version": "1.1.0",
-  "description": "a smarter way to make fresh build assets continuously available, with Github actions",
+  "description": "A smarter way to make fresh build assets continuously available and edit releases, with Github actions",
   "private": true,
   "main": "./dist/main.js",
   "scripts": {
