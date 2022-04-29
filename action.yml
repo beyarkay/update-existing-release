@@ -1,6 +1,6 @@
 name: 'Create/Update release and upload assets'
 description: 'Make fresh build assets available via Github release system'
-author: 'Colin Pitrat'
+author: 'Isaac Shelton'
 inputs: 
   token:
     description: 'Your Github token; try \$\{\{ secrets.GITHUB_TOKEN \}\} if your build lasts less than an hour, or create your own secret token with repository access if your build requires longer than an hour.'
@@ -25,6 +25,9 @@ inputs:
     default: false
   draft:
     description: 'Should the release, if created, be marked as a draft?  Such releases are generally not publicly visible.'
+    default: false
+  replace:
+    description: 'Should existing files for the release be removed if not overwritten?'
     default: false
 outputs:
   files:

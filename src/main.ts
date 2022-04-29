@@ -188,26 +188,32 @@ class Connection {
         }
     }
 
-    protected async deleteAssetsIfTheyExist(): Promise<boolean> {
+    protected async deleteAssetsIfTheyExist(shouldDeleteAllExisting: boolean): Promise<boolean> {
         try {
             let assets = await this.getReleaseAssets();
             let result: boolean = false;
+
             for (let asset of assets) {
-                for (let oneFile of this.files) {
-                    let baseFileName = basename(oneFile);
-                    if (asset.name === baseFileName) {
-                        {
-                            core.startGroup('Deleting old release asset id ' + asset.id + '...');
-                            await this.github.rest.repos.deleteReleaseAsset(
-                                {
-                                    ...context.repo,
-                                    asset_id: asset.id
-                                }
-                            )
-                            result = true;
-                            core.endGroup();
+                let shouldDelete: boolean = shouldDeleteAllExisting;
+
+                if(!shouldDeleteAllExisting){
+                    for (let oneFile of this.files) {
+                        if (asset.name === basename(oneFile)) {
+                            shouldDelete = true;
                         }
                     }
+                }
+
+                if(shouldDelete){
+                    core.startGroup('Deleting old release asset id ' + asset.id + '...');
+                    await this.github.rest.repos.deleteReleaseAsset(
+                        {
+                            ...context.repo,
+                            asset_id: asset.id
+                        }
+                    )
+                    result = true;
+                    core.endGroup();
                 }
             }
             return result;
@@ -388,7 +394,7 @@ class Connection {
 
         if (id >= 0) {
             await this.updateRelease(id);
-            await this.deleteAssetsIfTheyExist();
+            await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
             await this.uploadAssets(id);
         }
     }
@@ -410,7 +416,7 @@ class Connection {
     }
 
     protected setDraft() {
-        this.draft = (core.getInput('draft') === 'yes' || core.getInput('draft') === 'true');
+        this.draft = isTruthyString(core.getInput('draft'));
         core.setOutput('draft', this.draft ? 'true' : 'false');
     }
 
@@ -446,7 +452,7 @@ class Connection {
     }
 
     protected setPrerelease() {
-        this.prerelease = (core.getInput('prerelease') !== 'no' && core.getInput('prerelease') !== 'false');
+        this.prerelease = !isFalsyString(core.getInput('prerelease'));
         core.setOutput('prerelease', this.prerelease ? 'true' : 'false');
     }
 
@@ -526,6 +532,14 @@ class Connection {
             this.fail(error);
         }
     }
+}
+
+function isTruthyString(string: String){
+    return string === 'true' || string == 'yes';
+}
+
+function isFalsyString(string: String){
+    return string === 'false' || string == 'no';
 }
 
 core.startGroup('Updating release...');
