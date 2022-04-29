@@ -139,12 +139,6 @@ class Connection {
                 }
             );
 
-            let sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-            // Wait for GitHub to actually create new release
-            // before we continue
-            await sleep(2000);
-
             core.endGroup();
         }
         catch (error) {
@@ -358,25 +352,29 @@ class Connection {
 
     public async run() {
         let tag = await this.getTag();
-        // create the tag if necessary
+
+        // Create the tag if necessary
         if (tag === false) {
             await this.createTag();
             tag = await this.getTag();
         }
+
         if (!this.isTagCorrect()) {
             await this.updateTag();
         }
+
         if (!(await this.doesReleaseExist())) {
             await this.createRelease();
-        } else {
-          let id = await this.getReleaseID();
-          console.debug('Release id: ' + id);
-          if (id >= 0)
-            await this.updateRelease(id);
         }
 
-        await this.deleteAssetsIfTheyExist();
-        await this.uploadAssets();
+        let id = await this.getReleaseID();
+        console.debug('Release id: ' + id);
+
+        if (id >= 0) {
+            await this.updateRelease(id);
+            await this.deleteAssetsIfTheyExist();
+            await this.uploadAssets();
+        }
     }
 
     protected async setBody() {
@@ -503,6 +501,7 @@ class Connection {
                     name: basename(oneFile),
                     file: readFileSync(oneFile)
                 });
+
             }
             core.endGroup();
         } catch (error) {
