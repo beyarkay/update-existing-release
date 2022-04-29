@@ -138,6 +138,13 @@ class Connection {
                     prerelease: this.prerelease
                 }
             );
+
+            let sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+            // Wait for GitHub to actually create new release
+            // before we continue
+            await sleep(2000);
+
             core.endGroup();
         }
         catch (error) {
@@ -152,7 +159,7 @@ class Connection {
                 {
                     ...context.repo,
                     release_id: id,
-		    // For some reason, passing a tag that already exist started to fail
+                    // For some reason, passing a tag that already exist started to fail
                     //tag_name: this.tag,
                     name: this.release,
                     body: this.body,
