@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
-import { context, GitHub } from '@actions/github';
+import github from '@actions/github';
+import { GitHub } from '@actions/github/lib/utils';
 import { retry } from '@octokit/plugin-retry';
 import { throttling } from '@octokit/plugin-throttling';
 import { } from '@octokit/types';
@@ -7,6 +8,8 @@ import { config } from 'dotenv';
 import { readFileSync, statSync, existsSync } from 'fs';
 import { resolve, isAbsolute, basename } from 'path';
 import { lookup } from 'mime-types';
+
+const context = github.context;
 
 class Tagger {
     public name: string;
@@ -27,7 +30,7 @@ class Connection {
     /**
  * The Octokit Github object, used for most interactions with the server.
  */
-    protected github: GitHub;
+    protected github: typeof GitHub;
     /** 
      * The secret token used to authenticate with the server.
      */
@@ -95,7 +98,7 @@ class Connection {
         config();
         this.token = core.getInput('token', { required: true });
         core.setSecret(this.token);
-        this.github = new GitHub(
+        this.github = github.getOctokit(
             this.token,
             {
                 throttling,
