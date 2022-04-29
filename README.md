@@ -12,9 +12,9 @@ This is typically aimed at updating a `latest` or `nightly` release, possibly fr
 
  - Assets can be desynchronized when using multiple workflows if some are
    failing while others succeed.
-   
-   
-   
+
+*Overview:*
+
 - [update-existing-release](#update-existing-release)
   - [Quick start](#quick-start)
     - [For builds lasting more than an hour](#for-builds-lasting-more-than-an-hour)
