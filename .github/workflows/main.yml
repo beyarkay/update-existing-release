@@ -1,8 +1,8 @@
 name: Integration tests
 
 env:
-  UPDATE_RELEASE_TITLE: 'update-release'
-  UPDATE_RELEASE_DESCRIPTION: 'We eat our own dogfood here. We use update-release to release update-release, to prove that it works on all targets.'
+  UPDATE_RELEASE_TITLE: 'update-existing-release'
+  UPDATE_RELEASE_DESCRIPTION: 'We eat our own dogfood here. We use update-existing-release to release update-existing-release, to prove that it works on all targets.'
 
 on:
   push:
@@ -32,11 +32,11 @@ jobs:
         npm run bundle
     - name: Zip distribution
       run: |
-        zip -9 update-release-${{ matrix.os }}.zip *
-        zip -9 -r update-release-${{ matrix.os }}.zip src dist img .github
+        zip -9 update-existing-release-${{ matrix.os }}.zip *
+        zip -9 -r update-existing-release-${{ matrix.os }}.zip src dist img .github
     - name: Update release
-      uses: ColinPitrat/update-release@master
-      id: update-release
+      uses: ColinPitrat/update-existing-release@master
+      id: update-existing-release
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        files: update-release-${{ matrix.os }}.zip
+        files: update-existing-release-${{ matrix.os }}.zip

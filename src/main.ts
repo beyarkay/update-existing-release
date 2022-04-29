@@ -16,7 +16,7 @@ class Tagger {
     public email: string;
     public date: string;
     constructor() {
-        this.name = 'update-release github action';
+        this.name = 'update-existing-release github action';
         this.email = 'none'
         let now = new Date();
         this.date = now.toISOString();
@@ -65,7 +65,7 @@ class Connection {
     protected tag: string = 'unknown-tag';
 
     /**
-     * The default single-line message for tags created by update-release.
+     * The default single-line message for tags created by update-existing-release.
      */
     protected message: string = '';
 

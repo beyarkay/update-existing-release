@@ -15,7 +15,7 @@ to the latest asset uploaded).
  - Assets can be desynchronized when using multiple workflows if some are
    failing while others succeed.
 
-- [update-release](#update-release)
+- [update-existing-release](#update-existing-release)
   - [Quick start](#quick-start)
     - [For builds lasting more than an hour](#for-builds-lasting-more-than-an-hour)
   - [Summary](#summary)
@@ -59,7 +59,7 @@ Insert the following into the appropriate step in your `.github/workflows/*.yml`
 file:
 
     - name: Update release
-      uses: IsaacShelton/update-release@v1.1.0
+      uses: IsaacShelton/update-existing-release@v1.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         files: ./file-to-release.zip dist/other-file-to-release.exe README.md
@@ -73,7 +73,7 @@ with repo admin access, [store it as a secret](https://help.github.com/en/action
 in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: IsaacShelton/update-release@1.1.0
+      uses: IsaacShelton/update-existing-release@1.1.0
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
         release: Nightly
@@ -85,7 +85,7 @@ in your own repository, and reference that secret token in your build:
 
 ## Summary
 
-[This Github action](https://www.github.com/IsaacShelton/update-release) allows
+[This Github action](https://www.github.com/IsaacShelton/update-existing-release) allows
 you, to publish files created by your GitHub Actions as assets in new or
 existing releases. As it does so, it updates the release so that the tag and
 date match the last released asset.
@@ -100,7 +100,7 @@ this writing.
 
 ## Guide
 
-Once your build has successfully completed, update-release will choose a release
+Once your build has successfully completed, update-existing-release will choose a release
 name for your build.  Regardless of whether the ref that triggered the build is
 a tag or a branch, you'll get a human-friendly release name.  You can of course
 override the default choice. If the Github release name already exists, it is
@@ -108,7 +108,7 @@ reused; otherwise, it is created.
 
 ## Inputs
 
-The following parameters are accepted as inputs to the update-release action.
+The following parameters are accepted as inputs to the update-existing-release action.
 
 ### token
 
@@ -235,11 +235,11 @@ npm run bundle
 ### Details
 
 This Github action was written for [node.js](https://nodejs.org/en/) in
-[TypeScript](https://github.com/IsaacShelton/update-release), and it uses
+[TypeScript](https://github.com/IsaacShelton/update-existing-release), and it uses
 [webpack](https://webpack.js.org/) in order to run
 [ESLint](https://eslint.org/) before bundling.
 Use [npm install](https://docs.npmjs.com/cli/install) to install all
-package.json dependencies of update-release, before hacking on it.
+package.json dependencies of update-existing-release, before hacking on it.
 
 Several [npm](https://www.npmjs.com/) targets were added to speed along
 development.  The `test` run target builds readable `dist/main.js` and
@@ -250,8 +250,8 @@ minified `dist/main.js`.
 
 This action uses the `dotenv` import in order to facilitate debugging.  This
 import reads a `.env` file, if it exists, as the root of the installation, and
-uses it to populate environmental variables for local testing of update-release.
-A typical `.env` file for developing update-release, might look something like
+uses it to populate environmental variables for local testing of update-existing-release.
+A typical `.env` file for developing update-existing-release, might look something like
 this:
 
     INPUT_ASSET=your-build-asset.zip
@@ -261,7 +261,7 @@ this:
     GITHUB_WORKSPACE=/absolute/local/path/to/workspace
 
 Using an `.env` file, you can perform local testing and debugging of
-update-release without having to build a product first.
+update-existing-release without having to build a product first.
 
 ### Security concerns
 
@@ -285,4 +285,4 @@ files.
 ## Problems?
 
 I welcome all patches and improvements as pull requests against
-[this repository](https://github.com/IsaacShelton/update-release).
+[this repository](https://github.com/IsaacShelton/update-existing-release).
