@@ -1,5 +1,5 @@
-name: 'Create/Update release and upload assets'
-description: 'Make fresh build assets available via Github release system'
+name: 'update-existing-release'
+description: 'Update existing releases on GitHub and edit/replace their files'
 author: 'Isaac Shelton'
 inputs: 
   token:
