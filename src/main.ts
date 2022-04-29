@@ -118,7 +118,7 @@ class Connection {
     }
 
     protected async createLightweightTag(tagger: Tagger) {
-        return await this.github.git.createTag({
+        return await this.github.rest.git.createTag({
             ...context.repo,
             tag: this.tag,
             message: this.message,
@@ -131,7 +131,7 @@ class Connection {
     protected async createRelease() {
         try {
             core.startGroup('Creating release ' + this.release + '...')
-            await this.github.repos.createRelease(
+            await this.github.rest.repos.createRelease(
                 {
                     ...context.repo,
                     tag_name: this.tag,
@@ -149,10 +149,10 @@ class Connection {
         }
     }
 
-    protected async updateRelease(id: ReleaseId) {
+    protected async updateRelease(id: number) {
         try {
             core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
-            await this.github.repos.updateRelease(
+            await this.github.rest.repos.updateRelease(
                 {
                     ...context.repo,
                     release_id: id,
@@ -175,7 +175,7 @@ class Connection {
         try {
             let tagger = new Tagger();
             let tagObject = await this.createLightweightTag(tagger);
-            await this.github.git.createRef(
+            await this.github.rest.git.createRef(
                 {
                     ...context.repo,
                     ref: 'refs/tags/' + this.tag,
@@ -198,7 +198,7 @@ class Connection {
                     if (asset.name === baseFileName) {
                         {
                             core.startGroup('Deleting old release asset id ' + asset.id + '...');
-                            await this.github.repos.deleteReleaseAsset(
+                            await this.github.rest.repos.deleteReleaseAsset(
                                 {
                                     ...context.repo,
                                     asset_id: asset.id
@@ -245,7 +245,7 @@ class Connection {
             console.debug('Release id: ' + id);
             if (id < 0)
                 return;
-            let assets = await this.github.repos.listAssetsForRelease({
+            let assets = await this.github.rest.repos.listReleaseAssets({
                 ...context.repo,
                 release_id: id
             })
@@ -262,7 +262,7 @@ class Connection {
         try {
             core.startGroup('Finding ID of release...')
 
-            let releasesObject = await this.github.repos.listReleases({
+            let releasesObject = await this.github.rest.repos.listReleases({
                 ...context.repo,
             });
 
@@ -283,7 +283,7 @@ class Connection {
     protected async getReleases(): Promise<Array<string>> {
         try {
             core.startGroup('Getting list of releases...')
-            let releasesObject = await this.github.repos.listReleases({
+            let releasesObject = await this.github.rest.repos.listReleases({
                 ...context.repo,
             });
             let releases: Array<string> = [];
@@ -312,7 +312,7 @@ class Connection {
     protected async getRepos() {
         try {
             core.startGroup('Getting list of repositories...')
-            const allReleases = await this.github.repos.listReleases({
+            const allReleases = await this.github.rest.repos.listReleases({
                 ...context.repo
             });
             const repos = allReleases.data;
@@ -331,7 +331,7 @@ class Connection {
     protected async getTag() {
         try {
             core.startGroup('Getting list of repo tags...')
-            let tagsQuery = await this.github.repos.listTags(
+            let tagsQuery = await this.github.rest.repos.listTags(
                 {
                     ...context.repo
                 }
@@ -389,7 +389,7 @@ class Connection {
         if (id >= 0) {
             await this.updateRelease(id);
             await this.deleteAssetsIfTheyExist();
-            await this.uploadAssets();
+            await this.uploadAssets(id);
         }
     }
 
@@ -398,7 +398,7 @@ class Connection {
             this.body = core.getInput('body');
             if (this.body !== '')
                 return;
-            const commitObject = await this.github.git.getCommit({
+            const commitObject = await this.github.rest.git.getCommit({
                 ...context.repo,
                 commit_sha: this.sha
             });
@@ -472,7 +472,7 @@ class Connection {
         try {
             let tag = this.getTag();
             console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
-            await this.github.git.updateRef({
+            await this.github.rest.git.updateRef({
                 ...context.repo,
                 ref: 'refs/tags/' + this.tag,
                 sha: this.sha
@@ -482,7 +482,7 @@ class Connection {
         }
     }
 
-    protected async uploadAssets() {
+    protected async uploadAssets(id: number) {
         try {
             // if we can't figure out what file type you have, we'll assign it this unknown type
             // https://www.iana.org/assignments/media-types/application/octet-stream
@@ -511,13 +511,15 @@ class Connection {
                 // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
                 // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
                 console.debug('Uploading release asset ' + oneFile);
-                await this.github.repos.uploadReleaseAsset({
+
+                await this.github.rest.repos.uploadReleaseAsset({
+                    ...context.repo,
+                    release_id: id,
                     url: await this.getReleaseUploadURL(),
                     headers,
                     name: basename(oneFile),
-                    file: readFileSync(oneFile)
+                    data: readFileSync(oneFile).toString()
                 });
-
             }
             core.endGroup();
         } catch (error) {
