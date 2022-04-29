@@ -114,16 +114,6 @@ class Connection {
         this.setBody();
     }
 
-    protected refreshGitHub(){
-        this.github = new GitHub(
-            this.token,
-            {
-                throttling,
-                retry
-            }
-        );
-    }
-
     protected async createLightweightTag(tagger: Tagger) {
         return await this.github.git.createTag({
             ...context.repo,
@@ -149,7 +139,6 @@ class Connection {
                 }
             );
 
-            this.refreshGitHub();
             core.endGroup();
         }
         catch (error) {
