@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
-import github from '@actions/github';
 import { getOctokitOptions, GitHub } from '@actions/github/lib/utils';
+import { Context } from '@actions/github/lib/context';
 import { retry } from '@octokit/plugin-retry';
 import { throttling } from '@octokit/plugin-throttling';
 import { } from '@octokit/types';
@@ -9,7 +9,7 @@ import { readFileSync, statSync, existsSync } from 'fs';
 import { resolve, isAbsolute, basename } from 'path';
 import { lookup } from 'mime-types';
 
-const context = github.context;
+const context = new Context();
 
 class Tagger {
     public name: string;
