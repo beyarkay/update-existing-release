@@ -272,12 +272,24 @@ class Connection {
     }
 
     protected async getReleaseID(): Promise<number> {
-        let repos = await this.getRepos();
-        for (let repo of repos) {
-            if (repo.name === this.release) {
-                return repo.id;
+        try {
+            core.startGroup('Finding ID of release...')
+
+            let releasesObject = await this.github.repos.listReleases({
+                ...context.repo,
+            });
+
+            for (let release of releasesObject.data) {
+                if(release.name == this.release) return release.id;
             }
+
+            this.dump('releasesObjectData', releasesObject.data);
+            core.endGroup();
         }
+        catch (error) {
+            this.fail(error);
+        }
+
         this.fail('could not find id corresponding to release ' + this.release);
     }
 
