@@ -356,23 +356,6 @@ class Connection {
         }
     }
 
-    /**
-     * A tag is assumed to exist by the time this function is called.  This function checks whether
-     * the sha on the tag is correct.
-     */
-    protected async isTagCorrect(): Promise<boolean> {
-        try {
-            let tag = await this.getTag();
-            if (tag === false) {
-                return false;
-            }
-            return (tag.commit.sha === this.sha);
-        }
-        catch (error) {
-            this.fail(error);
-        }
-    }
-
     public async run() {
         let tag = await this.getTag();
 
@@ -380,10 +363,6 @@ class Connection {
         if (tag === false) {
             await this.createTag();
             tag = await this.getTag();
-        }
-
-        if (!this.isTagCorrect()) {
-            await this.updateTag();
         }
 
         if (!(await this.doesReleaseExist())) {
@@ -397,6 +376,10 @@ class Connection {
             await this.updateRelease(id);
             await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
             await this.uploadAssets(id);
+
+            if(!isFalsyString(core.getInput('updateTag'))){
+                await this.updateTag();
+            }
         }
     }
 
@@ -478,15 +461,13 @@ class Connection {
     protected async updateTag() {
         try {
             // Update tag
-            if(!isFalsyString(core.getInput('updateTag'))){
-                console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
-                
-                await this.github.rest.git.updateRef({
-                    ...context.repo,
-                    ref: `tags/${this.tag}`,
-                    sha: process.env.GITHUB_SHA
-                });
-            }
+            console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
+            
+            await this.github.rest.git.updateRef({
+                ...context.repo,
+                ref: `tags/${this.tag}`,
+                sha: process.env.GITHUB_SHA
+            });
         } catch (error) {
             this.fail(error);
         }
