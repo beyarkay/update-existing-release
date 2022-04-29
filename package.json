@@ -1,6 +1,6 @@
 {
   "name": "update-release",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "a smarter way to make fresh build assets continuously available, with Github actions",
   "private": true,
   "main": "./dist/main.js",

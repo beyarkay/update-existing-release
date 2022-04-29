@@ -43,6 +43,13 @@ to the latest asset uploaded).
 
 This is a fork of [ColinPitrat/update-release](https://github.com/ColinPitrat/update-release) which itself is a fork of [johnwbyrd/update-release](https://github.com/johnwbyrd/update-release)
 
+Changes in Isaac Shelton's fork include:
+- Updating all dependencies to latest versions
+- Code now works with latest version of GitHub API
+- Added 'replace' option, to allow for removing attached files that aren't overwritten
+- Now works correctly when the release doesn't exist already (it will be added before updating)
+- Cleaned up a little of the code, although it still is a mess
+
 ## Quick start
 
 Insert the following into the appropriate step in your `.github/workflows/*.yml`
@@ -63,10 +70,15 @@ with repo admin access, [store it as a secret](https://help.github.com/en/action
 in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: IsaacShelton/update-release@v1.0.1
+      uses: IsaacShelton/update-release@1.1.0
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
-        asset: ./the-file-you-want-to-release.zip
+        release: Nightly
+        replace: true
+        files: >
+          stage/x86_64-Windows-HelloWorld.exe
+          stage/arm64-MacOS-HelloWorld
+          stage/x86_64-Ubuntu-HelloWorld
 
 ## Summary
 
@@ -154,6 +166,15 @@ This parameter is **optional**.
 Should the release, if created, be marked as a prerelease?
 Such releases are generally publicly visible.
 Provide true or false as a parameter.
+
+This parameter is **optional**.
+The default setting is `false`.
+
+### replace (added in IsaacShelton's fork)
+
+Should existing files for the release be removed if not overwritten?
+This will cause all existing files attached to the release to be
+removed and replaced with the files provided.
 
 This parameter is **optional**.
 The default setting is `false`.
