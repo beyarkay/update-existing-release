@@ -73,7 +73,7 @@ with repo admin access, [store it as a secret](https://help.github.com/en/action
 in your own repository, and reference that secret token in your build:
 
     - name: Update release
-      uses: IsaacShelton/update-existing-release@1.1.0
+      uses: IsaacShelton/update-existing-release@v1.1.0
       with:
         token: ${{ secrets.YOUR_PRIVATE_SECRET_TOKEN }}
         release: Nightly
