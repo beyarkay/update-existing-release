@@ -509,7 +509,7 @@ class Connection {
                     url: await this.getReleaseUploadURL(),
                     headers,
                     name: basename(oneFile),
-                    data: readFileSync(oneFile).toString()
+                    data: readFileSync(oneFile).toString('binary')
                 });
             }
             core.endGroup();
