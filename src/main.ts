@@ -499,8 +499,8 @@ class Connection {
                 };
                 
                 // Debugging
-                console.log(contentLength);
-                console.log(readFileSync(oneFile).toString('binary').length);
+                console.debug(contentLength);
+                console.debug(readFileSync(oneFile).toString('binary').length);
 
                 // Upload a release asset
                 // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
