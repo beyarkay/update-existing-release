@@ -480,8 +480,8 @@ class Connection {
             const defaultAssetContentType = 'application/octet-stream';
             core.startGroup('Uploading release asset ' + this.files + '...')
             for (let oneFile of this.files) {
-
                 let contentType: any = lookup(oneFile);
+
                 if (contentType == false) {
                     console.warn('content type for file ' + oneFile +
                         ' could not be automatically determined from extension; going with ' +
@@ -513,7 +513,7 @@ class Connection {
                     url: await this.getReleaseUploadURL(),
                     headers,
                     name: basename(oneFile),
-                    data: readFileSync(oneFile).toString('binary')
+                    data: readFileSync(oneFile) as any
                 });
             }
             core.endGroup();
