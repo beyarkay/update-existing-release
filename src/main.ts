@@ -152,7 +152,7 @@ class Connection {
     protected async updateRelease(id: number) {
         try {
             core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
-            
+
             // Update release
             await this.github.rest.repos.updateRelease(
                 {
@@ -197,7 +197,7 @@ class Connection {
             for (let asset of assets) {
                 let shouldDelete: boolean = shouldDeleteAllExisting;
 
-                if(!shouldDeleteAllExisting){
+                if (!shouldDeleteAllExisting) {
                     for (let oneFile of this.files) {
                         if (asset.name === basename(oneFile)) {
                             shouldDelete = true;
@@ -205,7 +205,7 @@ class Connection {
                     }
                 }
 
-                if(shouldDelete){
+                if (shouldDelete) {
                     core.startGroup('Deleting old release asset id ' + asset.id + '...');
                     await this.github.rest.repos.deleteReleaseAsset(
                         {
@@ -238,7 +238,7 @@ class Connection {
     }
 
     fail(error: Object): void {
-        let formattedError = 'An error occurred while updating the release: \n' + JSON.stringify(error, null, 4);
+        let formattedError = 'An error occurred while updating the release: \n' + error.toString();
         console.error(formattedError);
         core.setFailed(formattedError);
         console.trace();
@@ -274,7 +274,7 @@ class Connection {
             });
 
             for (let release of releasesObject.data) {
-                if(release.name == this.release) return release.id;
+                if (release.name == this.release) return release.id;
             }
 
             this.dump('releasesObjectData', releasesObject.data);
@@ -377,7 +377,7 @@ class Connection {
             await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
             await this.uploadAssets(id);
 
-            if(!isFalsyString(core.getInput('updateTag'))){
+            if (!isFalsyString(core.getInput('updateTag'))) {
                 await this.updateTag();
             }
         }
@@ -462,7 +462,7 @@ class Connection {
         try {
             // Update tag
             console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
-            
+
             await this.github.rest.git.updateRef({
                 ...context.repo,
                 ref: `tags/${this.tag}`,
@@ -519,11 +519,11 @@ class Connection {
     }
 }
 
-function isTruthyString(string: String){
+function isTruthyString(string: String) {
     return string === 'true' || string == 'yes';
 }
 
-function isFalsyString(string: String){
+function isFalsyString(string: String) {
     return string === 'false' || string == 'no';
 }
 
