@@ -94,6 +94,11 @@ class Connection {
      */
     protected context: Object;
 
+    /**
+     * The Github repo ID.
+     */
+    protected id: number = -1;
+
     constructor() {
         config();
         this.token = core.getInput('token', { required: true });
@@ -128,7 +133,7 @@ class Connection {
         });
     }
 
-    protected async createRelease(): Promise<number> {
+    protected async createRelease() {
         core.startGroup('Creating release ' + this.release + '...')
         let release = await this.github.rest.repos.createRelease(
             {
@@ -143,17 +148,17 @@ class Connection {
 
         core.endGroup();
 
-        return release.data.id;
+        this.id = release.data.id;
     }
 
     protected async updateRelease(id: number) {
-        core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
+        core.startGroup('Updating release ' + this.release + ' (' + this.id + ') ...')
 
         // Update release
         await this.github.rest.repos.updateRelease(
             {
                 ...context.repo,
-                release_id: id,
+                release_id: this.id,
                 name: this.release,
                 body: this.body,
                 draft: this.draft,
@@ -223,28 +228,36 @@ class Connection {
 
     protected async getReleaseAssets() {
         core.startGroup('Getting assets for the release...')
-        let id = await this.getReleaseID();
-        console.debug('Release id: ' + id);
-        if (id < 0)
+        console.debug('Release id: ' + this.id);
+        if (this.id < 0)
             return;
         let assets = await this.github.rest.repos.listReleaseAssets({
             ...context.repo,
-            release_id: id
+            release_id: this.id
         })
         this.dump('assets', assets.data);
         core.endGroup();
         return assets.data;
     }
 
-    protected async getReleaseID(): Promise<number> {
+    protected async getReleaseID() {
         core.startGroup('Finding ID of release...')
+
+        if(this.id >= 0){
+            this.dump('Using cached release id ', this.id);
+            core.endGroup();
+            return this.id;
+        }
 
         let releasesObject = await this.github.rest.repos.listReleases({
             ...context.repo,
         });
 
         for (let release of releasesObject.data) {
-            if (release.name == this.release) return release.id;
+            if (release.name == this.release) {
+                this.id = release.id;
+                return;
+            }
         }
 
         this.dump('releasesObjectData', releasesObject.data);
@@ -317,20 +330,18 @@ class Connection {
             tag = await this.getTag();
         }
 
-        let id = null;
-
         if (await this.doesReleaseExist()) {
-            id = await this.getReleaseID();
+            await this.getReleaseID();
         } else {
-            id = await this.createRelease();
+            await this.createRelease();
         }
 
-        console.debug('Release id: ' + id);
+        console.debug('Release id: ' + this.id);
 
-        if (id >= 0) {
-            await this.updateRelease(id);
+        if (this.id >= 0) {
+            await this.updateRelease(this.id);
             await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
-            await this.uploadAssets(id);
+            await this.uploadAssets(this.id);
 
             if (!isFalsyString(core.getInput('updateTag'))) {
                 await this.updateTag();
@@ -451,7 +462,7 @@ class Connection {
 
             await this.github.rest.repos.uploadReleaseAsset({
                 ...context.repo,
-                release_id: id,
+                release_id: this.id,
                 url: await this.getReleaseUploadURL(),
                 headers,
                 name: basename(oneFile),
