@@ -165,6 +165,9 @@ class Connection {
     protected async createTag() {
         let tagger = new Tagger();
         let tagObject = await this.createLightweightTag(tagger);
+
+        console.log(`Creating tag '${this.tag}'`)
+
         await this.github.rest.git.createRef(
             {
                 ...context.repo,
@@ -172,6 +175,8 @@ class Connection {
                 sha: tagObject.data.sha
             }
         )
+
+        console.log(`Successfully created tag '${this.tag}'`)
     }
 
     protected async deleteAssetsIfTheyExist(shouldDeleteAllExisting: boolean): Promise<boolean> {
@@ -289,19 +294,23 @@ class Connection {
         let tagsQuery = await this.github.rest.repos.listTags({ ...context.repo });
         let tags = tagsQuery.data;
         core.endGroup();
+
         for (let tag of tags) {
             if (tag.name === this.tag) {
+                console.log(`Successfully found tag '${this.tag}'`)
                 return tag;
             }
         }
-        return false;
+
+        console.log(`Could not find tag '${this.tag}'`)
+        return null;
     }
 
     public async run() {
         let tag = await this.getTag();
 
         // Create the tag if necessary
-        if (tag === false) {
+        if (tag === null) {
             await this.createTag();
             tag = await this.getTag();
         }
