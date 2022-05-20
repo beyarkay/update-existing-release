@@ -99,6 +99,11 @@ class Connection {
      */
     protected id: number = -1;
 
+    /**
+     * The Github repo ID.
+     */
+    protected uploadUrl: string = null;
+
     constructor() {
         config();
         this.token = core.getInput('token', { required: true });
@@ -149,9 +154,10 @@ class Connection {
         core.endGroup();
 
         this.id = release.data.id;
+        this.uploadUrl = release.data.upload_url;
     }
 
-    protected async updateRelease(id: number) {
+    protected async updateRelease() {
         core.startGroup('Updating release ' + this.release + ' (' + this.id + ') ...')
 
         // Update release
@@ -240,13 +246,13 @@ class Connection {
         return assets.data;
     }
 
-    protected async getReleaseID() {
+    protected async useExistingRelease() {
         core.startGroup('Finding ID of release...')
 
         if(this.id >= 0){
-            this.dump('Using cached release id ', this.id);
+            this.dump('Using cached', this.id);
             core.endGroup();
-            return this.id;
+            return;
         }
 
         let releasesObject = await this.github.rest.repos.listReleases({
@@ -256,6 +262,7 @@ class Connection {
         for (let release of releasesObject.data) {
             if (release.name == this.release) {
                 this.id = release.id;
+                this.uploadUrl = release.upload_url;
                 return;
             }
         }
@@ -281,13 +288,7 @@ class Connection {
     }
 
     protected async getReleaseUploadURL(): Promise<string> {
-        let repos = await this.getRepos();
-        for (let repo of repos) {
-            if (repo.name === this.release) {
-                return repo.upload_url;
-            }
-        }
-        throw new Error('could not find upload_url corresponding to release ' + this.release);
+        return this.uploadUrl;
     }
 
     protected async getRepos() {
@@ -331,7 +332,7 @@ class Connection {
         }
 
         if (await this.doesReleaseExist()) {
-            await this.getReleaseID();
+            await this.useExistingRelease();
         } else {
             await this.createRelease();
         }
@@ -339,9 +340,9 @@ class Connection {
         console.debug('Release id: ' + this.id);
 
         if (this.id >= 0) {
-            await this.updateRelease(this.id);
+            await this.updateRelease();
             await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
-            await this.uploadAssets(this.id);
+            await this.uploadAssets();
 
             if (!isFalsyString(core.getInput('updateTag'))) {
                 await this.updateTag();
@@ -431,7 +432,7 @@ class Connection {
         });
     }
 
-    protected async uploadAssets(id: number) {
+    protected async uploadAssets() {
         // if we can't figure out what file type you have, we'll assign it this unknown type
         // https://www.iana.org/assignments/media-types/application/octet-stream
         const defaultAssetContentType = 'application/octet-stream';
