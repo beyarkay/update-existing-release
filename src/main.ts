@@ -129,181 +129,135 @@ class Connection {
     }
 
     protected async createRelease() {
-        try {
-            core.startGroup('Creating release ' + this.release + '...')
-            await this.github.rest.repos.createRelease(
-                {
-                    ...context.repo,
-                    tag_name: this.tag,
-                    name: this.release,
-                    body: this.body,
-                    draft: this.draft,
-                    prerelease: this.prerelease
-                }
-            );
+        core.startGroup('Creating release ' + this.release + '...')
+        await this.github.rest.repos.createRelease(
+            {
+                ...context.repo,
+                tag_name: this.tag,
+                name: this.release,
+                body: this.body,
+                draft: this.draft,
+                prerelease: this.prerelease
+            }
+        );
 
-            core.endGroup();
-        }
-        catch (error) {
-            this.fail(error);
-        }
+        core.endGroup();
     }
 
     protected async updateRelease(id: number) {
-        try {
-            core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
+        core.startGroup('Updating release ' + this.release + ' (' + id + ') ...')
 
-            // Update release
-            await this.github.rest.repos.updateRelease(
-                {
-                    ...context.repo,
-                    release_id: id,
-                    name: this.release,
-                    body: this.body,
-                    draft: this.draft,
-                    prerelease: this.prerelease
-                }
-            );
+        // Update release
+        await this.github.rest.repos.updateRelease(
+            {
+                ...context.repo,
+                release_id: id,
+                name: this.release,
+                body: this.body,
+                draft: this.draft,
+                prerelease: this.prerelease
+            }
+        );
 
-            core.endGroup();
-        }
-        catch (error) {
-            this.fail(error);
-        }
+        core.endGroup();
     }
 
     protected async createTag() {
-        try {
-            let tagger = new Tagger();
-            let tagObject = await this.createLightweightTag(tagger);
-            await this.github.rest.git.createRef(
-                {
-                    ...context.repo,
-                    ref: 'refs/tags/' + this.tag,
-                    sha: tagObject.data.sha
-                }
-            )
-        }
-        catch (error) {
-            this.fail(error);
-        }
+        let tagger = new Tagger();
+        let tagObject = await this.createLightweightTag(tagger);
+        await this.github.rest.git.createRef(
+            {
+                ...context.repo,
+                ref: 'refs/tags/' + this.tag,
+                sha: tagObject.data.sha
+            }
+        )
     }
 
     protected async deleteAssetsIfTheyExist(shouldDeleteAllExisting: boolean): Promise<boolean> {
-        try {
-            let assets = await this.getReleaseAssets();
-            let result: boolean = false;
+        let assets = await this.getReleaseAssets();
+        let result: boolean = false;
 
-            for (let asset of assets) {
-                let shouldDelete: boolean = shouldDeleteAllExisting;
+        for (let asset of assets) {
+            let shouldDelete: boolean = shouldDeleteAllExisting;
 
-                if (!shouldDeleteAllExisting) {
-                    for (let oneFile of this.files) {
-                        if (asset.name === basename(oneFile)) {
-                            shouldDelete = true;
-                        }
+            if (!shouldDeleteAllExisting) {
+                for (let oneFile of this.files) {
+                    if (asset.name === basename(oneFile)) {
+                        shouldDelete = true;
                     }
                 }
-
-                if (shouldDelete) {
-                    core.startGroup('Deleting old release asset id ' + asset.id + '...');
-                    await this.github.rest.repos.deleteReleaseAsset(
-                        {
-                            ...context.repo,
-                            asset_id: asset.id
-                        }
-                    )
-                    result = true;
-                    core.endGroup();
-                }
             }
-            return result;
+
+            if (shouldDelete) {
+                core.startGroup('Deleting old release asset id ' + asset.id + '...');
+                await this.github.rest.repos.deleteReleaseAsset(
+                    {
+                        ...context.repo,
+                        asset_id: asset.id
+                    }
+                )
+                result = true;
+                core.endGroup();
+            }
         }
-        catch (error) {
-            this.fail(error);
-        }
+
+        return result;
     }
 
     protected async doesReleaseExist(): Promise<boolean> {
-        try {
-            let releases = await this.getReleases();
-            return releases.includes(this.release);
-        } catch (error) {
-            this.fail(error);
-        }
+        let releases = await this.getReleases();
+        return releases.includes(this.release);
     }
 
     dump(name: string, thing: Object): void {
         console.debug(name + ':' + JSON.stringify(thing));
     }
 
-    fail(error: Object): void {
-        let formattedError = 'An error occurred while updating the release: \n' + error.toString();
-        console.error(formattedError);
-        core.setFailed(formattedError);
-        console.trace();
-        process.exit(2);
-    }
-
     protected async getReleaseAssets() {
-        try {
-            core.startGroup('Getting assets for the release...')
-            let id = await this.getReleaseID();
-            console.debug('Release id: ' + id);
-            if (id < 0)
-                return;
-            let assets = await this.github.rest.repos.listReleaseAssets({
-                ...context.repo,
-                release_id: id
-            })
-            this.dump('assets', assets.data);
-            core.endGroup();
-            return assets.data;
-        }
-        catch (error) {
-            this.fail(error);
-        }
+        core.startGroup('Getting assets for the release...')
+        let id = await this.getReleaseID();
+        console.debug('Release id: ' + id);
+        if (id < 0)
+            return;
+        let assets = await this.github.rest.repos.listReleaseAssets({
+            ...context.repo,
+            release_id: id
+        })
+        this.dump('assets', assets.data);
+        core.endGroup();
+        return assets.data;
     }
 
     protected async getReleaseID(): Promise<number> {
-        try {
-            core.startGroup('Finding ID of release...')
+        core.startGroup('Finding ID of release...')
 
-            let releasesObject = await this.github.rest.repos.listReleases({
-                ...context.repo,
-            });
+        let releasesObject = await this.github.rest.repos.listReleases({
+            ...context.repo,
+        });
 
-            for (let release of releasesObject.data) {
-                if (release.name == this.release) return release.id;
-            }
-
-            this.dump('releasesObjectData', releasesObject.data);
-            core.endGroup();
-        }
-        catch (error) {
-            this.fail(error);
+        for (let release of releasesObject.data) {
+            if (release.name == this.release) return release.id;
         }
 
-        this.fail('could not find id corresponding to release ' + this.release);
+        this.dump('releasesObjectData', releasesObject.data);
+        core.endGroup();
+
+        throw new Error('could not find id corresponding to release ' + this.release);
     }
 
     protected async getReleases(): Promise<Array<string>> {
-        try {
-            core.startGroup('Getting list of releases...')
-            let releasesObject = await this.github.rest.repos.listReleases({
-                ...context.repo,
-            });
-            let releases: Array<string> = [];
-            for (let release of releasesObject.data) {
-                releases.push(release.name);
-            }
-            this.dump('releases', releases);
-            core.endGroup();
-            return releases;
+        core.startGroup('Getting list of releases...')
+        let releasesObject = await this.github.rest.repos.listReleases({
+            ...context.repo,
+        });
+        let releases: Array<string> = [];
+        for (let release of releasesObject.data) {
+            releases.push(release.name);
         }
-        catch (error) {
-            this.fail(error);
-        }
+        this.dump('releases', releases);
+        core.endGroup();
+        return releases;
     }
 
     protected async getReleaseUploadURL(): Promise<string> {
@@ -313,47 +267,34 @@ class Connection {
                 return repo.upload_url;
             }
         }
-        this.fail('could not find upload_url corresponding to release ' + this.release);
+        throw new Error('could not find upload_url corresponding to release ' + this.release);
     }
 
     protected async getRepos() {
-        try {
-            core.startGroup('Getting list of repositories...')
-            const allReleases = await this.github.rest.repos.listReleases({
-                ...context.repo
-            });
-            const repos = allReleases.data;
-            this.dump('repos', repos);
-            core.endGroup();
-            return repos;
-        }
-        catch (error) {
-            this.fail(error);
-        }
+        core.startGroup('Getting list of repositories...');
+        const allReleases = await this.github.rest.repos.listReleases({
+            ...context.repo
+        });
+        const repos = allReleases.data;
+        this.dump('repos', repos);
+        core.endGroup();
+        return repos;
     }
 
     /**
      *  Returns details on the current tag, or false if it cannot be found.
      */
     protected async getTag() {
-        try {
-            core.startGroup('Getting list of repo tags...')
-            let tagsQuery = await this.github.rest.repos.listTags(
-                {
-                    ...context.repo
-                }
-            );
-            let tags = tagsQuery.data;
-            core.endGroup();
-            for (let tag of tags) {
-                if (tag.name === this.tag) {
-                    return tag;
-                }
+        core.startGroup('Getting list of repo tags...')
+        let tagsQuery = await this.github.rest.repos.listTags({ ...context.repo });
+        let tags = tagsQuery.data;
+        core.endGroup();
+        for (let tag of tags) {
+            if (tag.name === this.tag) {
+                return tag;
             }
-            return false;
-        } catch (error) {
-            this.fail(error);
         }
+        return false;
     }
 
     public async run() {
@@ -384,19 +325,14 @@ class Connection {
     }
 
     protected async setBody() {
-        try {
-            this.body = core.getInput('body');
-            if (this.body !== '')
-                return;
-            const commitObject = await this.github.rest.git.getCommit({
-                ...context.repo,
-                commit_sha: this.sha
-            });
-            this.body = commitObject.data.message;
-        }
-        catch (error) {
-            this.fail(error);
-        }
+        this.body = core.getInput('body');
+        if (this.body !== '')
+            return;
+        const commitObject = await this.github.rest.git.getCommit({
+            ...context.repo,
+            commit_sha: this.sha
+        });
+        this.body = commitObject.data.message;
     }
 
     protected setDraft() {
@@ -413,13 +349,11 @@ class Connection {
                 // go on a path hunt
                 tryPath = resolve(process.env.GITHUB_WORKSPACE, oneFile);
                 if (!existsSync(tryPath)) {
-                    this.fail('could not find ' + oneFile +
-                        ' as either absolute path or path relative to workspace');
+                    throw new Error(`could not find ${oneFile} as either absolute path or path relative to workspace`);
                 }
             }
             if (!existsSync(tryPath)) {
-                this.fail('could not find file ' + tryPath +
-                    ' for release; please provide a full path or path relative to workspace');
+                throw new Error(`could not find file ${tryPath} for release; please provide a full path or path relative to workspace`);
             }
             // Although Windows uses backslashes as separators, Windows can also use forward slashes as separators
             // and this choice is more compatible with cross-platform scripts
@@ -459,63 +393,55 @@ class Connection {
     }
 
     protected async updateTag() {
-        try {
-            // Update tag
-            console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
+        // Update tag
+        console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
 
-            await this.github.rest.git.updateRef({
-                ...context.repo,
-                ref: `tags/${this.tag}`,
-                sha: process.env.GITHUB_SHA
-            });
-        } catch (error) {
-            this.fail(error);
-        }
+        await this.github.rest.git.updateRef({
+            ...context.repo,
+            ref: `tags/${this.tag}`,
+            sha: process.env.GITHUB_SHA
+        });
     }
 
     protected async uploadAssets(id: number) {
-        try {
-            // if we can't figure out what file type you have, we'll assign it this unknown type
-            // https://www.iana.org/assignments/media-types/application/octet-stream
-            const defaultAssetContentType = 'application/octet-stream';
-            core.startGroup('Uploading release asset ' + this.files + '...')
-            for (let oneFile of this.files) {
-                let contentType: any = lookup(oneFile);
+        // if we can't figure out what file type you have, we'll assign it this unknown type
+        // https://www.iana.org/assignments/media-types/application/octet-stream
+        const defaultAssetContentType = 'application/octet-stream';
+        core.startGroup('Uploading release asset ' + this.files + '...')
+        for (let oneFile of this.files) {
+            let contentType: any = lookup(oneFile);
 
-                if (contentType == false) {
-                    console.warn('content type for file ' + oneFile +
-                        ' could not be automatically determined from extension; going with ' +
-                        defaultAssetContentType);
-                    contentType = defaultAssetContentType;
-                }
-
-                // Determine content-length for header to upload asset
-                const contentLength = statSync(oneFile).size;
-
-                // Setup headers for API call, see Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset for more information
-                const headers = {
-                    'content-type': contentType,
-                    'content-length': contentLength
-                };
-
-                // Upload a release asset
-                // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
-                // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
-                console.debug('Uploading release asset ' + oneFile);
-
-                await this.github.rest.repos.uploadReleaseAsset({
-                    ...context.repo,
-                    release_id: id,
-                    url: await this.getReleaseUploadURL(),
-                    headers,
-                    name: basename(oneFile),
-                    data: readFileSync(oneFile) as any
-                });
+            if (contentType == false) {
+                console.warn('content type for file ' + oneFile +
+                    ' could not be automatically determined from extension; going with ' +
+                    defaultAssetContentType);
+                contentType = defaultAssetContentType;
             }
-            core.endGroup();
-        } catch (error) {
-            this.fail(error);
+
+            // Determine content-length for header to upload asset
+            const contentLength = statSync(oneFile).size;
+
+            // Setup headers for API call, see Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset for more information
+            const headers = {
+                'content-type': contentType,
+                'content-length': contentLength
+            };
+
+            // Upload a release asset
+            // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
+            // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
+            console.debug('Uploading release asset ' + oneFile);
+
+            await this.github.rest.repos.uploadReleaseAsset({
+                ...context.repo,
+                release_id: id,
+                url: await this.getReleaseUploadURL(),
+                headers,
+                name: basename(oneFile),
+                data: readFileSync(oneFile) as any
+            });
         }
+        core.endGroup();
     }
 }
 
