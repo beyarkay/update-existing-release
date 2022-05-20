@@ -163,10 +163,10 @@ class Connection {
     }
 
     protected async createTag() {
+        console.log(`Creating tag '${this.tag}'`)
+
         let tagger = new Tagger();
         let tagObject = await this.createLightweightTag(tagger);
-
-        console.log(`Creating tag '${this.tag}'`)
 
         await this.github.rest.git.createRef(
             {
@@ -396,6 +396,9 @@ class Connection {
         this.tag = core.getInput('tag');
         if (this.tag === '') {
             this.tag = this.release;
+        }
+        if (/[\\?~^:*\[@\s]|^\/.*$|\/$|\/\/|\.\.|\.$/.test(this.tag)) {
+            throw new Error("Unsuitable tag name");
         }
         core.setOutput('release', this.release);
         core.setOutput('tag', this.tag);
