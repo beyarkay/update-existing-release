@@ -128,9 +128,9 @@ class Connection {
         });
     }
 
-    protected async createRelease() {
+    protected async createRelease(): Promise<number> {
         core.startGroup('Creating release ' + this.release + '...')
-        await this.github.rest.repos.createRelease(
+        let release = await this.github.rest.repos.createRelease(
             {
                 ...context.repo,
                 tag_name: this.tag,
@@ -142,6 +142,8 @@ class Connection {
         );
 
         core.endGroup();
+
+        return release.data.id;
     }
 
     protected async updateRelease(id: number) {
@@ -315,11 +317,14 @@ class Connection {
             tag = await this.getTag();
         }
 
-        if (!(await this.doesReleaseExist())) {
-            await this.createRelease();
+        let id = null;
+
+        if (await this.doesReleaseExist()) {
+            id = await this.getReleaseID();
+        } else {
+            id = await this.createRelease();
         }
 
-        let id = await this.getReleaseID();
         console.debug('Release id: ' + id);
 
         if (id >= 0) {
