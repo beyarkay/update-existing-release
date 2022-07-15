@@ -209,13 +209,18 @@ class Connection {
 
             if (shouldDelete) {
                 core.startGroup('Deleting old release asset id ' + asset.id + '...');
-                await this.github.rest.repos.deleteReleaseAsset(
-                    {
-                        ...context.repo,
-                        asset_id: asset.id
-                    }
-                )
-                result = true;
+                try {
+                    await this.github.rest.repos.deleteReleaseAsset(
+                        {
+                            ...context.repo,
+                            asset_id: asset.id
+                        }
+                    )
+                    result = true;
+                } catch (e) {
+                    console.log('Error occurred deleting asset with id ' + asset.id + ':' , e);
+                    result = false
+                }
                 core.endGroup();
             }
         }
@@ -323,28 +328,38 @@ class Connection {
     }
 
     public async run() {
+        console.debug("Executing beyarkay/update-existing-release");
+        console.debug("Getting tag...");
         let tag = await this.getTag();
 
         // Create the tag if necessary
         if (tag === null) {
+            console.debug("Tag doesn't exist, creating tag...");
             await this.createTag();
             tag = await this.getTag();
         }
+        console.debug("Tag: " + tag);
 
         if (await this.doesReleaseExist()) {
+            console.debug("Using existing release...");
             await this.useExistingRelease();
         } else {
+            console.debug("Creating new release...");
             await this.createRelease();
         }
 
         console.debug('Release id: ' + this.id);
 
         if (this.id >= 0) {
+            console.debug("Updating release");
             await this.updateRelease();
+            console.debug("Deleting assets if they exist (delete all existing: "+isTruthyString(core.getInput('replace'))+")");
             await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
+            console.debug("Uploading assets");
             await this.uploadAssets();
 
             if (!isFalsyString(core.getInput('updateTag'))) {
+                console.debug("Updating tag");
                 await this.updateTag();
             }
         }
