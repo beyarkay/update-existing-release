@@ -297,7 +297,7 @@ class Connection {
     }
 
     protected async getRepos() {
-        core.startGroup('Getting list of repositories...');
+        core.startGroup('Getting list of repositories (but actually releases)...');
         const allReleases = await this.github.rest.repos.listReleases({
             ...context.repo
         });
