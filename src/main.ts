@@ -237,13 +237,34 @@ class Connection {
         console.debug('Release id: ' + this.id);
         if (this.id < 0)
             return;
-        let assets = await this.github.rest.repos.listReleaseAssets({
-            ...context.repo,
-            release_id: this.id
-        })
-        this.dump('assets', assets.data);
+
+        let assets = [];
+        let page = 1;
+
+        while(true){
+            let response = await this.github.rest.repos.listReleaseAssets({
+                ...context.repo,
+                release_id: this.id,
+                per_page: 100,
+                page: page++,
+            });
+
+            let pageOfAssets = response.data;
+            let count = 0;
+
+            for(let asset in pageOfAssets){
+                assets.push(asset);
+                count++;
+            }
+
+            if(count < 100){
+                break;
+            }
+        }
+
+        this.dump('assets', assets);
         core.endGroup();
-        return assets.data;
+        return assets;
     }
 
     protected async useExistingRelease() {
