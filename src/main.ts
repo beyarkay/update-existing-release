@@ -252,7 +252,7 @@ class Connection {
             let pageOfAssets = response.data;
             let count = 0;
 
-            for(let asset in pageOfAssets){
+            for(let asset of pageOfAssets){
                 assets.push(asset);
                 count++;
             }
