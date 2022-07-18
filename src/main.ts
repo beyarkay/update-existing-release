@@ -357,6 +357,7 @@ class Connection {
                 }
             }
         } catch (error) {
+          getApiRateLimits();
           core.setFailed(error.message);
         }
     }
