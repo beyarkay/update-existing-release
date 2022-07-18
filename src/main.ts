@@ -494,8 +494,8 @@ class Connection {
         let limits = await this.github.rest.rateLimit.get({
             ...context.repo,
         });
-        this.dump("API Rate Limits", limits.rate ?? limits);
-        return limits;
+        this.dump("API Rate Limits", limits.data.resources.core);
+        return limits.data ?? limits;
     }
 }
 
