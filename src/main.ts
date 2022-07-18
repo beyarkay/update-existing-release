@@ -196,6 +196,7 @@ class Connection {
         let assets = await this.getReleaseAssets();
         let result: boolean = false;
 
+        let i = 0;
         for (let asset of assets) {
             let shouldDelete: boolean = shouldDeleteAllExisting;
 
@@ -208,6 +209,10 @@ class Connection {
             }
 
             if (shouldDelete) {
+                // If we're close to the rate limit, make sure the user knows about it
+                if (i++ % 100 == 0) {
+                    getApiRateLimits();
+                }
                 core.startGroup('Deleting old release asset ' + asset.name + ' (' + asset.id + ')...');
                 await this.github.rest.repos.deleteReleaseAsset(
                     {
@@ -443,6 +448,7 @@ class Connection {
         // https://www.iana.org/assignments/media-types/application/octet-stream
         const defaultAssetContentType = 'application/octet-stream';
         core.startGroup('Uploading release asset ' + this.files + '...')
+        let i = 0;
         for (let oneFile of this.files) {
             let contentType: any = lookup(oneFile);
 
@@ -467,6 +473,10 @@ class Connection {
             // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
             console.debug('Uploading release asset ' + oneFile);
 
+            // If we're close to the rate limit, make sure the user knows about it
+            if (i++ % 100 == 0) {
+                getApiRateLimits();
+            }
             await this.github.rest.repos.uploadReleaseAsset({
                 ...context.repo,
                 release_id: this.id,
@@ -477,6 +487,14 @@ class Connection {
             });
         }
         core.endGroup();
+    }
+
+    protected async getApiRateLimits() {
+        let limits = await this.github.rest.rateLimit.get({
+            ...context.repo,
+        });
+        this.dump("API Rate Limits", limits.rate ?? limits);
+        return limits;
     }
 }
 
