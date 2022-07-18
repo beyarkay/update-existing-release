@@ -211,7 +211,7 @@ class Connection {
             if (shouldDelete) {
                 // If we're close to the rate limit, make sure the user knows about it
                 if (i++ % 100 == 0) {
-                    getApiRateLimits();
+                    this.getApiRateLimits();
                 }
                 core.startGroup('Deleting old release asset ' + asset.name + ' (' + asset.id + ')...');
                 await this.github.rest.repos.deleteReleaseAsset(
@@ -357,7 +357,7 @@ class Connection {
                 }
             }
         } catch (error) {
-          getApiRateLimits();
+          this.getApiRateLimits();
           core.setFailed(error.message);
         }
     }
@@ -476,7 +476,7 @@ class Connection {
 
             // If we're close to the rate limit, make sure the user knows about it
             if (i++ % 100 == 0) {
-                getApiRateLimits();
+                this.getApiRateLimits();
             }
             await this.github.rest.repos.uploadReleaseAsset({
                 ...context.repo,
