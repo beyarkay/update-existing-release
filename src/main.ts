@@ -325,30 +325,34 @@ class Connection {
     }
 
     public async run() {
-        let tag = await this.getTag();
+        try {
+            let tag = await this.getTag();
 
-        // Create the tag if necessary
-        if (tag === null) {
-            await this.createTag();
-            tag = await this.getTag();
-        }
-
-        if (await this.doesReleaseExist()) {
-            await this.useExistingRelease();
-        } else {
-            await this.createRelease();
-        }
-
-        console.debug('Release id: ' + this.id);
-
-        if (this.id >= 0) {
-            await this.updateRelease();
-            await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
-            await this.uploadAssets();
-
-            if (!isFalsyString(core.getInput('updateTag'))) {
-                await this.updateTag();
+            // Create the tag if necessary
+            if (tag === null) {
+                await this.createTag();
+                tag = await this.getTag();
             }
+
+            if (await this.doesReleaseExist()) {
+                await this.useExistingRelease();
+            } else {
+                await this.createRelease();
+            }
+
+            console.debug('Release id: ' + this.id);
+
+            if (this.id >= 0) {
+                await this.updateRelease();
+                await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
+                await this.uploadAssets();
+
+                if (!isFalsyString(core.getInput('updateTag'))) {
+                    await this.updateTag();
+                }
+            }
+        } catch (error) {
+          core.setFailed(error.message);
         }
     }
 
