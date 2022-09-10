@@ -466,7 +466,7 @@ class Connection {
                     break;
                 }
             }
-            let verb = replacementFile != null ? 'Removing' : 'Replacing';
+            let verb = replacementFile != null ? 'Replacing' : 'Removing';
             let replacementText = replacementFile != null ? ' with new file ' + JSON.stringify(replacementFile) : '';
             core.startGroup(verb + ' old release asset ' + asset.name + ' (asset.id=' + asset.id + ')' + replacementText);
 
