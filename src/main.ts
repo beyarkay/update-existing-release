@@ -458,22 +458,19 @@ class Connection {
             let shouldDelete: boolean = shouldDeleteAllExisting;
             let replacementFile = null;
 
-            // if (!shouldDeleteAllExisting) {
             for (let i = 0; i < filesToUpload.length; i++) {
                 if (asset.name === basename(filesToUpload[i])) {
                     shouldDelete = true;
                     // pop the i-th file from `filesToUpload`
                     replacementFile = filesToUpload.splice(i, 1)[0];
-                    this.dump("Old file ", asset.name);
-                    this.dump("Replacement file ", replacementFile);
                     break;
                 }
             }
-            // }
+            let verb = replacementFile != null ? 'Removing' : 'Replacing';
+            let replacementText = replacementFile != null ? '' : ' with new file ' + JSON.stringify(replacementFile);
+            core.startGroup(verb + ' old release asset ' + asset.name + ' (asset.id=' + asset.id + ')' + replacementText);
 
             if (shouldDelete) {
-                let verb = replacementFile != null ? 'Removing' : 'Replacing';
-                core.startGroup(verb + ' old release asset ' + asset.name + ' (' + asset.id + ')...');
                 if (i++ % 100 == 0) { this.getApiRateLimits(); }
                 // Delete the existing asset
                 await this.github.rest.repos.deleteReleaseAsset({
@@ -502,8 +499,8 @@ class Connection {
                         data: readFileSync(replacementFile) as any
                     });
                 }
-                core.endGroup();
             }
+            core.endGroup();
         }
 
         // if we can't figure out what file type you have, we'll assign it this unknown type
