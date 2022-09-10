@@ -35,7 +35,7 @@ jobs:
         zip -9 update-existing-release-${{ matrix.os }}.zip *
         zip -9 -r update-existing-release-${{ matrix.os }}.zip src dist img .github
     - name: Update release
-      uses: ColinPitrat/update-existing-release@master
+      uses: beyarkay/update-existing-release@master
       id: update-existing-release
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
