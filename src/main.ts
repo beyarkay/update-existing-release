@@ -458,45 +458,50 @@ class Connection {
             let shouldDelete: boolean = shouldDeleteAllExisting;
             let replacementFile = null;
 
-            if (!shouldDeleteAllExisting) {
-                for (let i = 0; i < filesToUpload.length; i++) {
-                    if (asset.name === basename(filesToUpload[i])) {
-                        shouldDelete = true;
-                        // pop the i-th file from `filesToUpload`
-                        replacementFile = filesToUpload.splice(i, 1);
-                        break;
-                    }
+            // if (!shouldDeleteAllExisting) {
+            for (let i = 0; i < filesToUpload.length; i++) {
+                if (asset.name === basename(filesToUpload[i])) {
+                    shouldDelete = true;
+                    // pop the i-th file from `filesToUpload`
+                    replacementFile = filesToUpload.splice(i, 1);
+                    this.dump("Old file ", asset.name);
+                    this.dump("Replacement file ", replacementFile);
+                    break;
                 }
             }
+            // }
 
             if (shouldDelete) {
-                core.startGroup('Replacing old release asset ' + asset.name + ' (' + asset.id + ')...');
+                let verb = replacementFile != null ? 'Removing' : 'Replacing';
+                core.startGroup(verb + ' old release asset ' + asset.name + ' (' + asset.id + ')...');
                 if (i++ % 100 == 0) { this.getApiRateLimits(); }
                 // Delete the existing asset
                 await this.github.rest.repos.deleteReleaseAsset({
                         ...context.repo,
                         asset_id: asset.id
                 })
-                let contentType: any = lookup(replacementFile);
-                if (contentType == false) {
-                    console.warn('content type for file ' + replacementFile +
-                        ' could not be automatically determined from extension; going with ' +
-                        defaultAssetContentType);
-                    contentType = defaultAssetContentType;
+                if (replacementFile != null) {
+                    let contentType: any = lookup(replacementFile);
+                    if (contentType == false) {
+                        console.warn('content type for file ' + replacementFile +
+                            ' could not be automatically determined from extension; going with ' +
+                            defaultAssetContentType);
+                        contentType = defaultAssetContentType;
+                    }
+                    const headers = {
+                        'content-type': contentType,
+                        'content-length': statSync(replacementFile).size
+                    };
+                    // Upload the replacement asset
+                    await this.github.rest.repos.uploadReleaseAsset({
+                        ...context.repo,
+                        release_id: this.id,
+                        url: await this.getReleaseUploadURL(),
+                        headers,
+                        name: basename(replacementFile),
+                        data: readFileSync(replacementFile) as any
+                    });
                 }
-                const headers = {
-                    'content-type': contentType,
-                    'content-length': statSync(replacementFile).size
-                };
-                // Upload the replacement asset
-                await this.github.rest.repos.uploadReleaseAsset({
-                    ...context.repo,
-                    release_id: this.id,
-                    url: await this.getReleaseUploadURL(),
-                    headers,
-                    name: basename(replacementFile),
-                    data: readFileSync(replacementFile) as any
-                });
                 core.endGroup();
             }
         }
