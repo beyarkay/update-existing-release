@@ -463,7 +463,7 @@ class Connection {
                 if (asset.name === basename(filesToUpload[i])) {
                     shouldDelete = true;
                     // pop the i-th file from `filesToUpload`
-                    replacementFile = filesToUpload.splice(i, 1);
+                    replacementFile = filesToUpload.splice(i, 1)[0];
                     this.dump("Old file ", asset.name);
                     this.dump("Replacement file ", replacementFile);
                     break;
