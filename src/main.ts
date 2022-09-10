@@ -194,7 +194,6 @@ class Connection {
 
     protected async deleteAssetsIfTheyExist(shouldDeleteAllExisting: boolean): Promise<boolean> {
         let assets = await this.getReleaseAssets();
-        let result: boolean = false;
 
         let i = 0;
         for (let asset of assets) {
@@ -349,8 +348,8 @@ class Connection {
 
             if (this.id >= 0) {
                 await this.updateRelease();
-                await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
-                await this.uploadAssets();
+                // await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
+                await this.uploadAssets(core.getInput('replace'));
 
                 if (!isFalsyString(core.getInput('updateTag'))) {
                     await this.updateTag();
@@ -444,50 +443,95 @@ class Connection {
         });
     }
 
-    protected async uploadAssets() {
+    protected async uploadAssets(shouldDeleteAllExisting: boolean) {
         // if we can't figure out what file type you have, we'll assign it this unknown type
         // https://www.iana.org/assignments/media-types/application/octet-stream
         const defaultAssetContentType = 'application/octet-stream';
-        core.startGroup('Uploading release asset ' + this.files + '...')
+
+        let existingAssets = await this.getReleaseAssets();
+        let filesToUpload = this.files.slice(); // Create a copy of `this.files`
+
+        // First iterate over existing assets to delete and upload any
+        // conflicts
         let i = 0;
-        for (let oneFile of this.files) {
-            let contentType: any = lookup(oneFile);
+        for (let asset of existingAssets) {
+            let shouldDelete: boolean = shouldDeleteAllExisting;
+            let replacementFile = null;
+
+            if (!shouldDeleteAllExisting) {
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    if (asset.name === basename(filesToUpload[i])) {
+                        shouldDelete = true;
+                        // pop the i-th file from `filesToUpload`
+                        replacementFile = filesToUpload.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+            if (shouldDelete) {
+                core.startGroup('Replacing old release asset ' + asset.name + ' (' + asset.id + ')...');
+                if (i++ % 100 == 0) { this.getApiRateLimits(); }
+                // Delete the existing asset
+                await this.github.rest.repos.deleteReleaseAsset({
+                        ...context.repo,
+                        asset_id: asset.id
+                })
+                let contentType: any = lookup(replacementFile);
+                if (contentType == false) {
+                    console.warn('content type for file ' + replacementFile +
+                        ' could not be automatically determined from extension; going with ' +
+                        defaultAssetContentType);
+                    contentType = defaultAssetContentType;
+                }
+                const headers = {
+                    'content-type': contentType,
+                    'content-length': statSync(replacementFile).size
+                };
+                // Upload the replacement asset
+                await this.github.rest.repos.uploadReleaseAsset({
+                    ...context.repo,
+                    release_id: this.id,
+                    url: await this.getReleaseUploadURL(),
+                    headers,
+                    name: basename(replacementFile),
+                    data: readFileSync(replacementFile) as any
+                });
+                core.endGroup();
+            }
+        }
+
+        // if we can't figure out what file type you have, we'll assign it this unknown type
+        // https://www.iana.org/assignments/media-types/application/octet-stream
+        const defaultAssetContentType = 'application/octet-stream';
+        let i = 0;
+        for (let fileToUpload of filesToUpload) {
+            core.startGroup('Uploading release asset ' + filesToUpload + '...')
+            let contentType: any = lookup(fileToUpload);
 
             if (contentType == false) {
-                console.warn('content type for file ' + oneFile +
+                console.warn('content type for file ' + fileToUpload +
                     ' could not be automatically determined from extension; going with ' +
                     defaultAssetContentType);
                 contentType = defaultAssetContentType;
             }
-
-            // Determine content-length for header to upload asset
-            const contentLength = statSync(oneFile).size;
-
-            // Setup headers for API call, see Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset for more information
             const headers = {
                 'content-type': contentType,
-                'content-length': contentLength
+                'content-length': statSync(fileToUpload).size
             };
 
+            if (i++ % 100 == 0) { this.getApiRateLimits(); }
             // Upload a release asset
-            // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
-            // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
-            console.debug('Uploading release asset ' + oneFile);
-
-            // If we're close to the rate limit, make sure the user knows about it
-            if (i++ % 100 == 0) {
-                this.getApiRateLimits();
-            }
             await this.github.rest.repos.uploadReleaseAsset({
                 ...context.repo,
                 release_id: this.id,
                 url: await this.getReleaseUploadURL(),
                 headers,
-                name: basename(oneFile),
-                data: readFileSync(oneFile) as any
+                name: basename(fileToUpload),
+                data: readFileSync(fileToUpload) as any
             });
+            core.endGroup();
         }
-        core.endGroup();
     }
 
     protected async getApiRateLimits() {
