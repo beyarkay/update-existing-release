@@ -31,7 +31,7 @@ class Connection {
  * The Octokit Github object, used for most interactions with the server.
  */
     protected github: InstanceType<typeof GitHub>;
-    /** 
+    /**
      * The secret token used to authenticate with the server.
      */
     protected token: string = 'unknown-token'
@@ -53,13 +53,13 @@ class Connection {
      */
     protected release: string = 'unknown-release';
 
-    /** 
+    /**
      * The SHA associated with this build.
      */
     protected sha: string = 'unknown-sha';
 
-    /** The tag for the release.  If it does not exist, it will be created.  If it does exist, 
-     * it will be deleted and recreated.  If not given, it will be set to the same as the 
+    /** The tag for the release.  If it does not exist, it will be created.  If it does exist,
+     * it will be deleted and recreated.  If not given, it will be set to the same as the
      * name of the release.
      */
     protected tag: string = 'unknown-tag';
@@ -74,7 +74,7 @@ class Connection {
      */
     protected body: string = '';
 
-    /** 
+    /**
      * Is this a draft release?
      */
     protected draft: boolean = false;
