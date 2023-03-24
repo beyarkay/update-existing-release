@@ -469,15 +469,19 @@ class Connection {
             let verb = replacementFile != null ? 'Replacing' : 'Removing';
             let replacementText = replacementFile != null ? ' with new file ' + JSON.stringify(replacementFile) : '';
             core.startGroup(verb + ' old release asset ' + asset.name + ' (asset.id=' + asset.id + ')' + replacementText);
+            // SERVER ERROR STARTS {{{
 
+            this.dump('shouldDelete', shouldDelete);
             if (shouldDelete) {
                 if (i++ % 100 == 0) { this.getApiRateLimits(); }
+                console.debug('Deleting existing asset...');
                 // Delete the existing asset
                 await this.github.rest.repos.deleteReleaseAsset({
                         ...context.repo,
                         asset_id: asset.id
                 })
                 if (replacementFile != null) {
+                    console.debug('Uploading replacement asset...');
                     let contentType: any = lookup(replacementFile);
                     if (contentType == false) {
                         console.warn('content type for file ' + replacementFile +
@@ -500,6 +504,7 @@ class Connection {
                     });
                 }
             }
+            // SERVER ERROR ENDS }}}
             core.endGroup();
         }
 
