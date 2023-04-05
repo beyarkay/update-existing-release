@@ -518,22 +518,29 @@ class Connection {
             promises.push(
                 // First try to delete the file
                 del_promise.then(() => {}).then(() => {
-                    if (i % 10 == 0) { this.getApiRateLimits(); }
                     setTimeout(() => {
+                        core.startGroup(`Uploading asset ${fileToUpload}...`)
+                        if (i % 10 == 0) { this.getApiRateLimits(); }
                         // Then try to upload the file
-                        this.github.rest.repos.uploadReleaseAsset({
-                            ...context.repo,
-                            release_id: this.id,
-                            url: this.uploadUrl,
-                            headers: {
-                                'content-type': this.getMimeType(fileToUpload),
-                                'content-length': statSync(fileToUpload).size
-                            },
-                            name: basename(fileToUpload),
-                            data: readFileSync(fileToUpload) as any
-                        }).then(() => {
-                            console.log(`Uploaded asset ${fileToUpload}.`)
-                        });
+                        try {
+                            this.github.rest.repos.uploadReleaseAsset({
+                                ...context.repo,
+                                release_id: this.id,
+                                url: this.uploadUrl,
+                                headers: {
+                                    'content-type': this.getMimeType(fileToUpload),
+                                    'content-length': statSync(fileToUpload).size
+                                },
+                                name: basename(fileToUpload),
+                                data: readFileSync(fileToUpload) as any
+                            }).then(() => {
+                                console.log(`Uploaded asset ${fileToUpload}.`)
+                            });
+                        } catch (error) {
+                            this.getApiRateLimits();
+                            console.warn(error.message);
+                        }
+                        core.endGroup()
                     }, 500)
                 })
             )
@@ -542,12 +549,17 @@ class Connection {
             for (let asset of existingAssets) {
                 promises.push(
                     setTimeout(() => {
-                        this.github.rest.repos.deleteReleaseAsset({
-                            ...context.repo,
-                            asset_id: asset.id
-                        }).then(() => {
-                            console.log(`Deleted asset because it wasn't in the new release: ${asset.name} (id ${asset.id})`)
-                        })
+                        try {
+                            this.github.rest.repos.deleteReleaseAsset({
+                                ...context.repo,
+                                asset_id: asset.id
+                            }).then(() => {
+                                console.log(`Deleted asset because it wasn't in the new release: ${asset.name} (id ${asset.id})`)
+                            })
+                        } catch (error) {
+                            this.getApiRateLimits();
+                            console.warn(error.message);
+                        }
                     }, 500)
                 );
             }
