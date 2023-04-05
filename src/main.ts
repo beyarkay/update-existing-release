@@ -127,6 +127,9 @@ class Connection {
         this.setBody();
     }
 
+    /**
+     *  Creates a GH tag
+     */
     protected async createLightweightTag(tagger: Tagger) {
         return await this.github.rest.git.createTag({
             ...context.repo,
@@ -138,6 +141,10 @@ class Connection {
         });
     }
 
+    /**
+     *  Creates a new release, and then sets the `id` and `uploadUrl` member
+     *  variables
+     */
     protected async createRelease() {
         core.startGroup('Creating release ' + this.release + '...')
         let release = await this.github.rest.repos.createRelease(
@@ -157,6 +164,10 @@ class Connection {
         this.uploadUrl = release.data.upload_url;
     }
 
+    /**
+     *  Update a release's metadata, such as it's id, name, body, draft status,
+     *  and whether or not it is a prerelease.
+     */
     protected async updateRelease() {
         core.startGroup('Updating release ' + this.release + ' (' + this.id + ') ...')
 
@@ -175,6 +186,9 @@ class Connection {
         core.endGroup();
     }
 
+    /**
+     *  Creates a tag
+     */
     protected async createTag() {
         console.log(`Creating tag '${this.tag}'`)
 
@@ -192,6 +206,9 @@ class Connection {
         console.log(`Successfully created tag '${this.tag}'`)
     }
 
+    /**
+     *  Deletes assets if they already exist
+     */
     protected async deleteAssetsIfTheyExist(shouldDeleteAllExisting: boolean): Promise<boolean> {
         let assets = await this.getReleaseAssets();
 
@@ -227,6 +244,9 @@ class Connection {
         return result;
     }
 
+    /**
+     *  Returns true if the release exists, else false
+     */
     protected async doesReleaseExist(): Promise<boolean> {
         let releases = await this.getReleases();
         return releases.includes(this.release);
@@ -236,6 +256,9 @@ class Connection {
         console.debug(name + ':' + JSON.stringify(thing));
     }
 
+    /**
+     *  Get a list of all currently existing assets of the release.
+     */
     protected async getReleaseAssets() {
         core.startGroup('Getting assets for the release...')
         console.debug('Release id: ' + this.id);
@@ -252,6 +275,10 @@ class Connection {
         return assets;
     }
 
+    /**
+     *  Attempts to find the ID of the release. Sets the `id` and `uploadUrl`
+     *  member variables if found, otherwise throws an error.
+     */
     protected async useExistingRelease() {
         core.startGroup('Finding ID of release...')
 
@@ -279,6 +306,9 @@ class Connection {
         throw new Error('could not find id corresponding to release ' + this.release);
     }
 
+    /**
+     *  Gets a list of the releases for this repo
+     */
     protected async getReleases(): Promise<Array<string>> {
         core.startGroup('Getting list of releases...')
         let releasesObject = await this.github.rest.repos.listReleases({
@@ -293,10 +323,10 @@ class Connection {
         return releases;
     }
 
-    protected async getReleaseUploadURL(): Promise<string> {
-        return this.uploadUrl;
-    }
 
+    /**
+     *  Gets a list of the repos
+     */
     protected async getRepos() {
         core.startGroup('Getting list of repositories...');
         const allReleases = await this.github.rest.repos.listReleases({
@@ -309,7 +339,7 @@ class Connection {
     }
 
     /**
-     *  Returns details on the current tag, or false if it cannot be found.
+     *  Returns details on the current tag, or null if it cannot be found.
      */
     protected async getTag() {
         core.startGroup('Getting list of repo tags...')
@@ -328,6 +358,9 @@ class Connection {
         return null;
     }
 
+    /**
+     *  Entry into the action, this will attempt to upload the releases.
+     */
     public async run() {
         try {
             let tag = await this.getTag();
@@ -346,6 +379,7 @@ class Connection {
 
             console.debug('Release id: ' + this.id);
 
+            // id is >= 0 iff the release got created properly
             if (this.id >= 0) {
                 await this.updateRelease();
                 // await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
@@ -432,6 +466,9 @@ class Connection {
         core.setOutput('tag', this.tag);
     }
 
+    /**
+     *  Updates a tag
+     */
     protected async updateTag() {
         // Update tag
         console.debug('Updating tag ' + this.tag + ' to ' + this.sha);
@@ -443,110 +480,103 @@ class Connection {
         });
     }
 
-    protected async uploadAssets(shouldDeleteAllExisting: boolean) {
-        // if we can't figure out what file type you have, we'll assign it this unknown type
-        // https://www.iana.org/assignments/media-types/application/octet-stream
-        const defaultAssetContentType = 'application/octet-stream';
+    /**
+     *  Upload all the release assets, replacing them if necessary.
+     */
+    protected async uploadAssets(removeFileIfNotOverwritten: boolean) {
 
         let existingAssets = await this.getReleaseAssets();
         let filesToUpload = this.files.slice(); // Create a copy of `this.files`
 
-        // First iterate over existing assets to delete and upload any
-        // conflicts
-        let i = 0;
-        for (let asset of existingAssets) {
-            let shouldDelete: boolean = shouldDeleteAllExisting;
-            let replacementFile = null;
+        core.startGroup(`Uploading ${filesToUpload.length} release assets.`);
+        let promises = [];
+        for (let fileToUpload of filesToUpload) {
+            // For each file we want to upload
+            // Figure out if the file has already been uploaded (and therefore
+            // should first be deleted)
+            let assetToDelete = existingAssets.find(asset => asset.name === fileToUpload);
+            // Also remove that asset from the existing assets. We'll use the
+            // existingAssets array later on to remove all files that weren't
+            // overwritten
+            existingAssets = existingAssets.filter(asset => asset.name !== fileToUpload)
 
-            for (let i = 0; i < filesToUpload.length; i++) {
-                if (asset.name === basename(filesToUpload[i])) {
-                    shouldDelete = true;
-                    // pop the i-th file from `filesToUpload`
-                    replacementFile = filesToUpload.splice(i, 1)[0];
-                    break;
-                }
-            }
-            let verb = replacementFile != null ? 'Replacing' : 'Removing';
-            let replacementText = replacementFile != null ? ' with new file ' + JSON.stringify(replacementFile) : '';
-            core.startGroup(verb + ' old release asset ' + asset.name + ' (asset.id=' + asset.id + ')' + replacementText);
-            // SERVER ERROR STARTS {{{
-
-            this.dump('shouldDelete', shouldDelete);
-            if (shouldDelete) {
-                if (i++ % 100 == 0) { this.getApiRateLimits(); }
-                console.debug('Deleting existing asset...');
-                // Delete the existing asset
-                await this.github.rest.repos.deleteReleaseAsset({
-                        ...context.repo,
-                        asset_id: asset.id
+            // If it has been uploaded, then delete it. If it hasn't been
+            // uploaded, then just use an immediately resolving promise to keep
+            // our types in check.
+            let del_promise = typeof assetToDelete !== "undefined"
+              ? this.github.rest.repos.deleteReleaseAsset({
+                    ...context.repo, asset_id: assetToDelete.id
+                }).then(() => {
+                    console.log(`Deleted asset ${assetToDelete.name} (id ${assetToDelete.id})`)
                 })
-                if (replacementFile != null) {
-                    console.debug('Uploading replacement asset...');
-                    let contentType: any = lookup(replacementFile);
-                    if (contentType == false) {
-                        console.warn('content type for file ' + replacementFile +
-                            ' could not be automatically determined from extension; going with ' +
-                            defaultAssetContentType);
-                        contentType = defaultAssetContentType;
-                    }
-                    const headers = {
-                        'content-type': contentType,
-                        'content-length': statSync(replacementFile).size
-                    };
-                    // Upload the replacement asset
-                    await this.github.rest.repos.uploadReleaseAsset({
+              : Promise.resolve({})
+
+            // We're going to create a long list of promises, and then `await`
+            // all the promises right at the end. Each promise will first
+            // delete the asset if it exists, and then it will upload that
+            // same asset. In this manner, we're as parallel as possible, while
+            // keeping the total downtime of any one asset to a minimum.
+            promises.push(
+                // First try to delete the file
+                del_promise.then(() => {
+                    // Then try to upload the file
+                    this.github.rest.repos.uploadReleaseAsset({
                         ...context.repo,
                         release_id: this.id,
-                        url: await this.getReleaseUploadURL(),
-                        headers,
-                        name: basename(replacementFile),
-                        data: readFileSync(replacementFile) as any
+                        url: this.uploadUrl,
+                        headers: {
+                            'content-type': this.getMimeType(fileToUpload),
+                            'content-length': statSync(fileToUpload).size
+                        },
+                        name: basename(fileToUpload),
+                        data: readFileSync(fileToUpload) as any
+                    }).then(() => {
+                        console.log(`Uploaded asset ${filesToUpload}.`)
                     });
-                }
-            }
-            // SERVER ERROR ENDS }}}
-            core.endGroup();
+                })
+            )
         }
-
-        // if we can't figure out what file type you have, we'll assign it this unknown type
-        // https://www.iana.org/assignments/media-types/application/octet-stream
-        const defaultAssetContentType = 'application/octet-stream';
-        let i = 0;
-        for (let fileToUpload of filesToUpload) {
-            core.startGroup('Uploading release asset ' + filesToUpload + '...')
-            let contentType: any = lookup(fileToUpload);
-
-            if (contentType == false) {
-                console.warn('content type for file ' + fileToUpload +
-                    ' could not be automatically determined from extension; going with ' +
-                    defaultAssetContentType);
-                contentType = defaultAssetContentType;
+        if (removeFileIfNotOverwritten) {
+            for (let asset of existingAssets) {
+                promises.push(
+                    this.github.rest.repos.deleteReleaseAsset({
+                        ...context.repo,
+                        asset_id: asset.id
+                    }).then(() => {
+                        console.log(`Deleted asset ${asset.name} (id ${asset.id})`)
+                    })
+                );
             }
-            const headers = {
-                'content-type': contentType,
-                'content-length': statSync(fileToUpload).size
-            };
-
-            if (i++ % 100 == 0) { this.getApiRateLimits(); }
-            // Upload a release asset
-            await this.github.rest.repos.uploadReleaseAsset({
-                ...context.repo,
-                release_id: this.id,
-                url: await this.getReleaseUploadURL(),
-                headers,
-                name: basename(fileToUpload),
-                data: readFileSync(fileToUpload) as any
-            });
-            core.endGroup();
         }
+        await Promise.all(promises);
+        core.endGroup();
     }
 
+    /**
+     *  Get the Rate limits for the GitHub API and report them.
+     */
     protected async getApiRateLimits() {
         let limits = await this.github.rest.rateLimit.get({
             ...context.repo,
         });
-        this.dump("API Rate Limits", limits.data.resources.core);
+        const core_limits = limits.data.resources.core;
+        const reset_at = new Date(core_limits.reset * 1000);
+        console.debug(`API Rate Limits: ${JSON.stringify(core_limits)}, reset at: ${reset_at}`);
         return limits.data ?? limits;
+    }
+
+    protected getMimeType(file: string) {
+        // if we can't figure out what file type you have, we'll assign it this unknown type
+        // https://www.iana.org/assignments/media-types/application/octet-stream
+        const defaultMimeType = 'application/octet-stream';
+        let mimeType: string | false = lookup(file);
+        if (mimeType == false) {
+            console.warn('content type for file ' + file +
+                ' could not be automatically determined from extension; going with ' +
+                defaultMimeType);
+            mimeType = defaultMimeType;
+        }
+        return mimeType
     }
 }
 
