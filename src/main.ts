@@ -484,11 +484,12 @@ class Connection {
     protected async uploadAssets(removeFileIfNotOverwritten: boolean) {
 
         let existingAssets = await this.getReleaseAssets();
-        let filesToUpload = this.files.slice(); // Create a copy of `this.files`
+        let filesToUpload: string[] = this.files.slice(); // Create a copy of `this.files`
 
         core.startGroup(`Uploading ${filesToUpload.length} release assets.`);
         let promises = [];
-        for (let fileToUpload of filesToUpload) {
+        for (let i = 0; i < filesToUpload.length; i++) {
+            let fileToUpload = filesToUpload[i];
             // For each file we want to upload
             // Figure out if the file has already been uploaded (and therefore
             // should first be deleted)
@@ -505,7 +506,7 @@ class Connection {
               ? this.github.rest.repos.deleteReleaseAsset({
                     ...context.repo, asset_id: assetToDelete.id
                 }).then(() => {
-                    console.log(`Deleted asset ${assetToDelete.name} (id ${assetToDelete.id})`)
+                    console.log(`Deleted asset because it will be overwrittten: ${assetToDelete.name} (id ${assetToDelete.id})`)
                 })
               : Promise.resolve({})
 
@@ -516,33 +517,38 @@ class Connection {
             // keeping the total downtime of any one asset to a minimum.
             promises.push(
                 // First try to delete the file
-                del_promise.then(() => {
-                    // Then try to upload the file
-                    this.github.rest.repos.uploadReleaseAsset({
-                        ...context.repo,
-                        release_id: this.id,
-                        url: this.uploadUrl,
-                        headers: {
-                            'content-type': this.getMimeType(fileToUpload),
-                            'content-length': statSync(fileToUpload).size
-                        },
-                        name: basename(fileToUpload),
-                        data: readFileSync(fileToUpload) as any
-                    }).then(() => {
-                        console.log(`Uploaded asset ${fileToUpload}.`)
-                    });
+                del_promise.then(() => {}).then(() => {
+                    if (i % 10 == 0) { this.getApiRateLimits(); }
+                    setTimeout(() => {
+                        // Then try to upload the file
+                        this.github.rest.repos.uploadReleaseAsset({
+                            ...context.repo,
+                            release_id: this.id,
+                            url: this.uploadUrl,
+                            headers: {
+                                'content-type': this.getMimeType(fileToUpload),
+                                'content-length': statSync(fileToUpload).size
+                            },
+                            name: basename(fileToUpload),
+                            data: readFileSync(fileToUpload) as any
+                        }).then(() => {
+                            console.log(`Uploaded asset ${fileToUpload}.`)
+                        });
+                    }, 500)
                 })
             )
         }
         if (removeFileIfNotOverwritten) {
             for (let asset of existingAssets) {
                 promises.push(
-                    this.github.rest.repos.deleteReleaseAsset({
-                        ...context.repo,
-                        asset_id: asset.id
-                    }).then(() => {
-                        console.log(`Deleted asset ${asset.name} (id ${asset.id})`)
-                    })
+                    setTimeout(() => {
+                        this.github.rest.repos.deleteReleaseAsset({
+                            ...context.repo,
+                            asset_id: asset.id
+                        }).then(() => {
+                            console.log(`Deleted asset because it wasn't in the new release: ${asset.name} (id ${asset.id})`)
+                        })
+                    }, 500)
                 );
             }
         }
