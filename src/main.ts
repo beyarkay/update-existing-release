@@ -95,12 +95,12 @@ class Connection {
     protected context: Object;
 
     /**
-     * The Github repo ID.
+     * The Github release ID.
      */
     protected id: number = -1;
 
     /**
-     * The Github repo ID.
+     *
      */
     protected uploadUrl: string = null;
 
@@ -382,10 +382,8 @@ class Connection {
             // id is >= 0 iff the release got created properly
             if (this.id >= 0) {
                 await this.updateRelease();
-                // await this.deleteAssetsIfTheyExist(isTruthyString(core.getInput('replace')));
-                await this.uploadAssets(core.getInput('replace'));
-
-                if (!isFalsyString(core.getInput('updateTag'))) {
+                await this.uploadAssets(isTruthyString(core.getInput('replace')));
+                if (isTruthyString(core.getInput('updateTag'))) {
                     await this.updateTag();
                 }
             }
@@ -531,7 +529,7 @@ class Connection {
                         name: basename(fileToUpload),
                         data: readFileSync(fileToUpload) as any
                     }).then(() => {
-                        console.log(`Uploaded asset ${filesToUpload}.`)
+                        console.log(`Uploaded asset ${fileToUpload}.`)
                     });
                 })
             )
