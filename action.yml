@@ -1,7 +1,7 @@
 name: 'update-existing-release'
 description: 'Update existing releases on GitHub and edit/replace their files'
 author: 'Isaac Shelton'
-inputs: 
+inputs:
   token:
     description: 'Your Github token; try \$\{\{ secrets.GITHUB_TOKEN \}\} if your build lasts less than an hour, or create your own secret token with repository access if your build requires longer than an hour.'
     required: true
@@ -44,8 +44,8 @@ outputs:
   tag:
     description: 'The calculated tag for the release.'
 runs:
-  using: 'node12'
-  main: 'dist/main.js'  
+  using: 'node16'
+  main: 'dist/main.js'
 branding:
   icon: wind
   color: blue
