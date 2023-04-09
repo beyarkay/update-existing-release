@@ -564,7 +564,13 @@ class Connection {
                 );
             }
         }
-        await Promise.all(promises);
+        try {
+            await Promise.all(promises);
+        } catch (error) {
+            console.log("Error uploading assets");
+            console.log(error);
+            this.getApiRateLimits();
+        }
         core.endGroup();
     }
 
